@@ -65,6 +65,7 @@ body {
 .animate-rise { animation: rise .35s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes sheet { from { transform: translateY(100%) } to { transform: none } }
 .animate-sheet { animation: sheet .3s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes shake { 0%,100% { transform: none } 20%,60% { transform: translateX(-8px) } 40%,80% { transform: translateX(8px) } }
 @keyframes shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
 .shimmer {
   background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.35) 50%, transparent 100%);

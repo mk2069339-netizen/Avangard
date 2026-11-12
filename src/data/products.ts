@@ -32,6 +32,7 @@ export interface Product {
   specs: [string, string][]
   desc: string
   stock: number
+  hidden?: boolean
 }
 
 export const categories: Category[] = [
@@ -66,7 +67,7 @@ const p = (x: Partial<Product> & Pick<Product, 'id' | 'title' | 'brand' | 'cat' 
   ...x,
 })
 
-export const products: Product[] = [
+export const seedProducts: Product[] = [
   p({ id: 'f1', title: 'Muzlatgich Samsung RB38 No Frost, 385 L', brand: 'Samsung', cat: 'fridge', art: 'fridge', price: 8_490_000, oldPrice: 10_200_000, rating: 4.9, reviews: 1284, orders: 6200, colors: [silver, black, white], badges: ['hit', 'original'],
     specs: [['Hajmi', '385 L'], ['Tizim', 'Total No Frost'], ['Energiya sinfi', 'A++'], ['Shovqin', '35 dB'], ['O‘lchamlari', '59.5×65.8×203 sm'], ['Kafolat', '3 yil']],
     desc: 'Ikki kamerali muzlatgich: Digital Inverter kompressori 10 yil kafolatlangan, ko‘p tomonlama sovutish (All-Around Cooling) mahsulotlarni uzoq yangi saqlaydi.' }),
@@ -158,14 +159,13 @@ export const products: Product[] = [
     desc: 'Bir necha soniyada xonani isitadi. Tebranish rejimi.' }),
 ]
 
-export const brands = Array.from(new Set(products.map((x) => x.brand))).sort()
+export const brandsOf = (list: Product[]) => Array.from(new Set(list.map((x) => x.brand))).sort()
 
 export const sampleReviews: Review[] = [
   { name: 'Dilnoza R.', rating: 5, date: '3 kun oldin', text: 'Ertasiga yetkazib berishdi, o‘rnatish ham bepul bo‘ldi. Sifati zo‘r, original ekan!' },
-  { name: 'Jasur T.', rating: 5, date: '1 hafta oldin', text: 'Muddatli to‘lovga oldim, 12 oyga — hech qanday ustama yo‘q. Rahmat Avangard!' },
+  { name: 'Jasur T.', rating: 5, date: '1 hafta oldin', text: 'Narxi juda qulay, kuryer o‘zi ko‘tarib chiqib o‘rnatib berdi. Rahmat Avangard!' },
   { name: 'Malika S.', rating: 4, date: '2 hafta oldin', text: 'Yaxshi mahsulot, faqat qutisi biroz ezilgan edi. Ishlashi a‘lo.' },
   { name: 'Sardor M.', rating: 5, date: '1 oy oldin', text: 'Narxi boshqa do‘konlardan arzonroq chiqdi. Kafolat taloni bilan berishdi.' },
 ]
 
-export const getProduct = (id: string) => products.find((x) => x.id === id)
 export const discount = (pr: Product) => (pr.oldPrice ? Math.round((1 - pr.price / pr.oldPrice) * 100) : 0)

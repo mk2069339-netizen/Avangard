@@ -5,16 +5,16 @@ import ProductArt from '../components/ProductArt'
 import { tintFor } from '../components/ProductCard'
 import { Empty, PrimaryButton, Section, TopBar } from '../components/ui'
 import ProductCard from '../components/ProductCard'
-import { products } from '../data/products'
-import { deliveryDate, monthly, som } from '../format'
+import { deliveryDate, som } from '../format'
 
 export default function Cart() {
   const nav = useNavigate()
   const cart = useStore((s) => s.cart)
   const { setQty, toggleCheck, checkAll, removeChecked, toggleFav } = useStore()
   const favs = useStore((s) => s.favs)
-  const lines = cartLines(cart)
-  const t = cartTotals(cart)
+  const products = useStore((s) => s.products)
+  const lines = cartLines(cart, products)
+  const t = cartTotals(cart, products)
   const allChecked = lines.length > 0 && lines.every((l) => l.checked)
 
   if (!lines.length)
@@ -93,10 +93,7 @@ export default function Cart() {
       <div className="fixed inset-x-0 bottom-[62px] z-30 mx-auto max-w-[520px] border-t border-line bg-card/95 px-3 py-3 backdrop-blur-xl">
         <PrimaryButton disabled={!t.count} onClick={() => nav('/checkout')} className="flex items-center justify-between">
           <span>Rasmiylashtirish</span>
-          <span className="text-right leading-tight">
-            <span className="block">{som(t.sum)}</span>
-            <span className="block text-[11px] font-medium opacity-80">yoki {som(monthly(t.sum))}/oy</span>
-          </span>
+          <span>{som(t.sum)}</span>
         </PrimaryButton>
       </div>
     </div>

@@ -1,18 +1,16 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Heart, Package, Moon, Sun, MapPin, Globe, Headphones, Info, ChevronRight, Wallet, Gift, Bell, CircleCheck, ShieldCheck, Percent } from 'lucide-react'
-import { products } from '../data/products'
+import { Heart, Package, Moon, Sun, MapPin, Globe, Headphones, Info, ChevronRight, Gift, Bell, CircleCheck, ShieldCheck, Percent } from 'lucide-react'
 import { ProductGrid } from '../components/ProductCard'
 import ProductArt from '../components/ProductArt'
 import { tintFor } from '../components/ProductCard'
 import { Empty, Mark, PrimaryButton, TopBar } from '../components/ui'
 import { useStore } from '../store'
-import { getProduct } from '../data/products'
-import { deliveryDate, monthly, som } from '../format'
-import { useState } from 'react'
+import { deliveryDate, som } from '../format'
 
 export function Favorites() {
   const nav = useNavigate()
   const favs = useStore((s) => s.favs)
+  const products = useStore((s) => s.products)
   const items = favs.map((id) => products.find((p) => p.id === id)!).filter(Boolean)
   return (
     <div className="pb-28">
@@ -30,7 +28,6 @@ export function Profile() {
   const { dark, toggleDark, orders, city, favs } = useStore()
   const rows = [
     { i: Package, t: 'Buyurtmalarim', s: orders.length ? `${orders.length} ta` : '', to: '/orders' },
-    { i: Wallet, t: 'Avangard Nasiya', s: '0%', to: '/installment' },
     { i: Heart, t: 'Saralangan', s: favs.length ? `${favs.length}` : '', to: '/favorites' },
     { i: MapPin, t: 'Shahar', s: city, to: '/' },
     { i: Bell, t: 'Bildirishnomalar', s: '', to: '/profile' },
@@ -90,6 +87,7 @@ export function Profile() {
 export function Orders() {
   const nav = useNavigate()
   const orders = useStore((s) => s.orders)
+  const products = useStore((s) => s.products)
   return (
     <div className="pb-28">
       <TopBar title="Buyurtmalarim" />
@@ -106,7 +104,7 @@ export function Orders() {
               <div className="mt-1 text-[13px] text-muted">{new Date(o.date).toLocaleDateString('ru-RU')} · {o.address}</div>
               <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto">
                 {o.items.map((it) => {
-                  const p = getProduct(it.id)
+                  const p = products.find((x) => x.id === it.id)
                   return p ? (
                     <Link key={it.id + it.color} to={`/p/${p.id}`} className="grid size-14 shrink-0 place-items-center rounded-xl" style={{ background: tintFor(p.cat) }}>
                       <ProductArt kind={p.art} color={p.colors[it.color]?.hex} className="size-12" />
@@ -114,9 +112,9 @@ export function Orders() {
                   ) : null
                 })}
               </div>
-              <Steps />
+              <Steps status={o.status} />
               <div className="mt-3 flex justify-between border-t border-line pt-3 text-[14px]">
-                <span className="text-muted">{o.months ? `Muddatli: ${som(monthly(o.total, o.months))} × ${o.months}` : 'Jami'}</span>
+                <span className="text-muted">{o.payment} · Jami</span>
                 <b>{som(o.total)}</b>
               </div>
             </div>
@@ -127,9 +125,10 @@ export function Orders() {
   )
 }
 
-function Steps() {
+function Steps({ status }: { status: string }) {
   const s = ['Qabul qilindi', 'Yig‘ilmoqda', 'Yo‘lda', 'Yetkazildi']
-  const done = 1
+  if (status === 'Bekor qilindi') return <div className="mt-4 rounded-xl bg-[#e5322f]/10 px-3 py-2 text-[13px] font-semibold text-[#e5322f]">Buyurtma bekor qilindi</div>
+  const done = ({ Yangi: 0, Tasdiqlandi: 0, 'Yig‘ilmoqda': 1, 'Yo‘lda': 2, Yetkazildi: 3 } as Record<string, number>)[status] ?? 0
   return (
     <div className="mt-4">
       <div className="flex gap-1">
@@ -153,48 +152,6 @@ export function Success() {
       <div className="mt-8 w-full max-w-sm space-y-2">
         <PrimaryButton onClick={() => nav('/orders', { replace: true })}>Buyurtmani kuzatish</PrimaryButton>
         <button onClick={() => nav('/', { replace: true })} className="h-12 w-full rounded-2xl bg-chip font-semibold">Xaridni davom ettirish</button>
-      </div>
-    </div>
-  )
-}
-
-export function Installment() {
-  const [price, setPrice] = useState(8_000_000)
-  const [m, setM] = useState(12)
-  return (
-    <div className="pb-28">
-      <TopBar title="Avangard Nasiya" />
-      <div className="mx-2 mt-2 overflow-hidden rounded-3xl bg-gradient-to-br from-[#15131f] to-brand-700 p-5 text-white">
-        <div className="text-sm opacity-75">Muddatli to‘lov</div>
-        <div className="mt-1 text-3xl font-black">0% ustama</div>
-        <div className="mt-1 text-sm opacity-85">3, 6, 12 yoki 24 oyga. Limit 50 mln so‘mgacha.</div>
-        <div className="mt-4 flex gap-2 text-[12px]">
-          {['Pasport/ID', '5 daqiqa', 'Kafilsiz'].map((t) => <span key={t} className="rounded-full bg-white/15 px-3 py-1">{t}</span>)}
-        </div>
-      </div>
-      <div className="mx-2 mt-2 rounded-3xl bg-card p-4">
-        <h2 className="font-bold">Kalkulyator</h2>
-        <div className="mt-3 text-sm text-muted">Mahsulot narxi</div>
-        <div className="text-2xl font-extrabold">{som(price)}</div>
-        <input type="range" min={500_000} max={30_000_000} step={100_000} value={price} onChange={(e) => setPrice(+e.target.value)} className="mt-3 w-full accent-[#1f6977]" />
-        <div className="mt-4 grid grid-cols-4 gap-1 rounded-2xl bg-chip p-1">
-          {[3, 6, 12, 24].map((t) => (
-            <button key={t} onClick={() => setM(t)} className={`rounded-xl py-2 text-[13px] font-semibold ${m === t ? 'bg-card shadow-sm' : 'text-muted'}`}>{t} oy</button>
-          ))}
-        </div>
-        <div className="mt-4 flex items-center justify-between rounded-2xl bg-accent-400/20 p-4">
-          <span className="text-sm">Oyiga</span>
-          <span className="text-2xl font-black">{som(monthly(price, m))}</span>
-        </div>
-      </div>
-      <div className="mx-2 mt-2 rounded-3xl bg-card p-4">
-        <h2 className="mb-3 font-bold">Qanday ishlaydi?</h2>
-        {['Mahsulotni savatga qo‘shing', 'To‘lovda «Muddatli to‘lov»ni tanlang', 'Pasport ma‘lumotlari va kartani kiriting', 'Tasdiqlang — mahsulot ertaga uyingizda'].map((t, i) => (
-          <div key={t} className="flex items-center gap-3 py-2">
-            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-600 text-sm font-bold text-white">{i + 1}</span>
-            <span className="text-[14px]">{t}</span>
-          </div>
-        ))}
       </div>
     </div>
   )

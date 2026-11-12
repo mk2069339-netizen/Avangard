@@ -4,7 +4,7 @@ import { useState } from 'react'
 import ProductArt from './ProductArt'
 import { discount, type Product } from '../data/products'
 import { useStore } from '../store'
-import { monthly, som } from '../format'
+import { som } from '../format'
 import { categories } from '../data/products'
 
 const badgeMap = {
@@ -51,9 +51,6 @@ export default function ProductCard({ p, wide = false }: { p: Product; wide?: bo
           <span className="text-[16px] leading-tight font-extrabold">{som(p.price)}</span>
         </div>
         {p.oldPrice && <span className="-mt-1 mb-1 text-[12px] text-muted line-through">{som(p.oldPrice)}</span>}
-        <span className="mb-1.5 w-fit rounded-md bg-accent-400/90 px-1.5 py-0.5 text-[11.5px] font-semibold text-black">
-          {som(monthly(p.price))}/oyiga
-        </span>
         <h3 className="line-clamp-2 text-[13px] leading-[1.3] text-ink/90">{p.title}</h3>
         <div className="mt-1 flex items-center gap-1 text-[12px] text-muted">
           <Star size={12} className="fill-accent-400 text-accent-400" />

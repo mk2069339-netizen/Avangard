@@ -1,7 +1,7 @@
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpDown, ChevronRight, Clock, Search as SearchIcon, SlidersHorizontal, X, Mic, Check } from 'lucide-react'
-import { brands, categories, discount, products, type Product } from '../data/products'
+import { brandsOf, categories, discount, type Product } from '../data/products'
 import ProductArt from '../components/ProductArt'
 import { ProductGrid } from '../components/ProductCard'
 import { Empty, PrimaryButton, TopBar } from '../components/ui'
@@ -10,6 +10,7 @@ import { useStore } from '../store'
 /* ---------- Catalog ---------- */
 export function Catalog() {
   const nav = useNavigate()
+  const products = useStore((s) => s.products).filter((p) => !p.hidden)
   return (
     <div className="pb-28">
       <TopBar title="Katalog" back={false} />
@@ -63,7 +64,7 @@ function useFiltered(base: Product[]) {
 
 function Toolbar({ f, base }: { f: ReturnType<typeof useFiltered>; base: Product[] }) {
   const [sheet, setSheet] = useState<null | 'sort' | 'filter'>(null)
-  const bs = brands.filter((b) => base.some((p) => p.brand === b))
+  const bs = brandsOf(base)
   const active = f.sel.length + (f.max ? 1 : 0) + (f.onlySale ? 1 : 0)
   const priceSteps = [0, 1_000_000, 3_000_000, 5_000_000, 10_000_000]
   return (
@@ -130,7 +131,8 @@ function Toolbar({ f, base }: { f: ReturnType<typeof useFiltered>; base: Product
 export function CategoryPage() {
   const { id = '' } = useParams()
   const cat = categories.find((c) => c.id === id)
-  const base = useMemo(() => products.filter((p) => p.cat === id), [id])
+  const all = useStore((s) => s.products)
+  const base = useMemo(() => all.filter((p) => p.cat === id && !p.hidden), [all, id])
   const f = useFiltered(base)
   return (
     <div className="pb-28">
@@ -149,6 +151,7 @@ export function SearchPage() {
   const q = params.get('q') ?? ''
   const [text, setText] = useState(q)
   const { recent, addRecent, clearRecent } = useStore()
+  const products = useStore((s) => s.products).filter((p) => !p.hidden)
   const input = useRef<HTMLInputElement>(null)
   useEffect(() => { if (!q) input.current?.focus() }, [q])
 
@@ -160,7 +163,7 @@ export function SearchPage() {
       const hay = norm(`${p.title} ${p.brand} ${categories.find((c) => c.id === p.cat)?.name}`)
       return words.every((w) => hay.includes(w))
     })
-  }, [q])
+  }, [q, products])
   const f = useFiltered(results)
   const suggestions = text.trim()
     ? products.filter((p) => norm(p.title).includes(norm(text.trim()))).slice(0, 6)

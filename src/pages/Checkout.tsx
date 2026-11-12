@@ -1,22 +1,22 @@
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import { CreditCard, MapPin, Store, Truck, Wallet, Banknote, CircleCheck } from 'lucide-react'
+import { CreditCard, MapPin, Store, Truck, Banknote, CircleCheck } from 'lucide-react'
 import { cartLines, cartTotals, useStore } from '../store'
 import { PrimaryButton, TopBar } from '../components/ui'
 import ProductArt from '../components/ProductArt'
 import { tintFor } from '../components/ProductCard'
-import { deliveryDate, monthly, som } from '../format'
+import { deliveryDate, som } from '../format'
 
 export default function Checkout() {
   const nav = useNavigate()
   const cart = useStore((s) => s.cart)
   const city = useStore((s) => s.city)
   const placeOrder = useStore((s) => s.placeOrder)
-  const t = cartTotals(cart)
-  const lines = cartLines(cart).filter((l) => l.checked)
+  const products = useStore((s) => s.products)
+  const t = cartTotals(cart, products)
+  const lines = cartLines(cart, products).filter((l) => l.checked)
   const [mode, setMode] = useState<'courier' | 'pickup'>('courier')
-  const [pay, setPay] = useState<'card' | 'nasiya' | 'cash'>('card')
-  const [months, setMonths] = useState(12)
+  const [pay, setPay] = useState<'card' | 'cash'>('card')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('+998 ')
   const [addr, setAddr] = useState('')
@@ -25,7 +25,9 @@ export default function Checkout() {
   const submit = () => {
     const id = placeOrder({
       total: t.sum,
-      months: pay === 'nasiya' ? months : 0,
+      payment: pay === 'card' ? 'Karta orqali' : 'Qabul qilganda',
+      customer: name.trim(),
+      phone: phone.trim(),
       address: mode === 'pickup' ? `${city}, Avangard topshirish punkti` : `${city}, ${addr}`,
     })
     nav(`/success/${id}`, { replace: true })
@@ -64,7 +66,6 @@ export default function Checkout() {
       <Card title="To‘lov usuli">
         {([
           ['card', 'Karta orqali onlayn', 'Uzcard, Humo, Visa', CreditCard],
-          ['nasiya', 'Muddatli to‘lov 0%', `${som(monthly(t.sum, months))} × ${months} oy`, Wallet],
           ['cash', 'Qabul qilganda', 'Naqd yoki terminal', Banknote],
         ] as const).map(([k, l, s, I]) => (
           <button key={k} onClick={() => setPay(k)} className={`mb-2 flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition ${pay === k ? 'border-brand-600 bg-brand-50/60 dark:bg-brand-900/30' : 'border-line'}`}>
@@ -76,13 +77,6 @@ export default function Checkout() {
             <span className={`size-5 rounded-full border-2 ${pay === k ? 'border-[6px] border-brand-600' : 'border-gray-300'}`} />
           </button>
         ))}
-        {pay === 'nasiya' && (
-          <div className="grid grid-cols-4 gap-1 rounded-2xl bg-chip p-1">
-            {[3, 6, 12, 24].map((m) => (
-              <button key={m} onClick={() => setMonths(m)} className={`rounded-xl py-2 text-[13px] font-semibold ${months === m ? 'bg-card shadow-sm' : 'text-muted'}`}>{m} oy</button>
-            ))}
-          </div>
-        )}
       </Card>
 
       <Card title={`Mahsulotlar · ${t.count}`}>

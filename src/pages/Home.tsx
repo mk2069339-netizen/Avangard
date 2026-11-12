@@ -1,15 +1,16 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Bell, ChevronRight, MapPin, Search, ScanLine, Truck, Percent, ShieldCheck, Wrench, Flame, Sparkles, ChevronDown } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { brands, categories, discount, products } from '../data/products'
+import { brandsOf, categories, discount } from '../data/products'
 import ProductCard, { ProductGrid } from '../components/ProductCard'
 import ProductArt from '../components/ProductArt'
 import { Countdown, Logo, Section } from '../components/ui'
 import { useStore } from '../store'
+import { useTapUnlock } from './Admin'
 import { som } from '../format'
 
 const banners = [
-  { title: 'Muddatli to‘lov 0%', sub: '24 oygacha ustamasiz. Pasport bilan 5 daqiqada', art: 'fridge', bg: 'linear-gradient(135deg,#0c3038 0%,#1f6977 55%,#2fb3c6 100%)', to: '/c/fridge' },
+  { title: 'Muzlatgichlar −25%', sub: 'No Frost va inverter modellar. Ertaga yetkazamiz', art: 'fridge', bg: 'linear-gradient(135deg,#0c3038 0%,#1f6977 55%,#2fb3c6 100%)', to: '/c/fridge' },
   { title: 'Black Friday −45%', sub: 'Televizorlar va smartfonlarga katta chegirmalar', art: 'tv', bg: 'linear-gradient(135deg,#1a0b0b 0%,#e5322f 100%)', to: '/c/tv' },
   { title: 'Qishga tayyormisiz?', sub: 'Isitgichlar va inverter konditsionerlar', art: 'ac', bg: 'linear-gradient(135deg,#ff8a00 0%,#e5322f 100%)', to: '/c/ac' },
   { title: 'O‘rnatish bepul', sub: 'Kir yuvish va idish yuvish mashinalariga', art: 'washer', bg: 'linear-gradient(135deg,#175663 0%,#00b86b 100%)', to: '/c/washer' },
@@ -26,6 +27,9 @@ const stories = [
 
 export default function Home() {
   const nav = useNavigate()
+  const products = useStore((s) => s.products).filter((p) => !p.hidden)
+  const brands = brandsOf(products)
+  const tapLogo = useTapUnlock(5, () => nav('/admin'))
   const city = useStore((s) => s.city)
   const setCity = useStore((s) => s.setCity)
   const [chip, setChip] = useState('Hammasi')
@@ -46,7 +50,7 @@ export default function Home() {
       {/* Header */}
       <div className="bg-card px-4 pt-3 pb-1">
         <div className="flex items-center justify-between">
-          <Logo className="h-8" />
+          <button onClick={tapLogo} className="select-none" aria-label="Avangard"><Logo className="h-8" /></button>
           <div className="flex items-center gap-1">
             <button
               onClick={() => { const list = ['Toshkent', 'Samarqand', 'Buxoro', 'Namangan', 'Andijon', 'Farg‘ona', 'Qarshi', 'Nukus']; setCity(list[(list.indexOf(city) + 1) % list.length]) }}
@@ -91,7 +95,7 @@ export default function Home() {
       <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto px-4">
         {[
           { i: Truck, t: '1 kunda yetkazish', c: 'text-ok' },
-          { i: Percent, t: '0% muddatli to‘lov', c: 'text-accent-500' },
+          { i: Percent, t: 'Har kuni chegirmalar', c: 'text-accent-500' },
           { i: ShieldCheck, t: 'Rasmiy kafolat', c: 'text-brand-600' },
           { i: Wrench, t: 'Bepul o‘rnatish', c: 'text-[#e5322f]' },
         ].map(({ i: I, t, c }) => (
@@ -134,16 +138,6 @@ export default function Home() {
           {hits.map((p) => <ProductCard key={p.id} p={p} wide />)}
         </div>
       </Section>
-
-      {/* Installment promo */}
-      <Link to="/installment" className="mx-2 mt-6 flex items-center gap-3 rounded-3xl bg-[#15131f] p-4 text-white dark:bg-brand-900">
-        <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-accent-400 text-2xl font-black text-black">0%</div>
-        <div className="flex-1">
-          <div className="font-bold">Avangard Nasiya</div>
-          <div className="text-[13px] opacity-75">Limit 50 000 000 so‘mgacha. Karta va kafilsiz.</div>
-        </div>
-        <ChevronRight className="opacity-60" />
-      </Link>
 
       {/* Brands */}
       <Section title="Mashhur brendlar">

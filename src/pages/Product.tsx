@@ -1,22 +1,21 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { ChevronLeft, Heart, Share2, Truck, ShieldCheck, RotateCcw, Store, ChevronRight, BadgeCheck, Minus, Plus, Star, MessageCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { discount, getProduct, products, sampleReviews } from '../data/products'
+import { discount, sampleReviews } from '../data/products'
 import ProductArt from '../components/ProductArt'
 import ProductCard, { tintFor } from '../components/ProductCard'
 import { Section, Stars } from '../components/ui'
 import { useStore } from '../store'
-import { deliveryDate, monthly, som } from '../format'
+import { deliveryDate, som } from '../format'
 
-const terms = [3, 6, 12, 24]
 
 export default function Product() {
   const { id = '' } = useParams()
   const nav = useNavigate()
-  const p = getProduct(id)
+  const products = useStore((s) => s.products)
+  const p = products.find((x) => x.id === id)
   const [color, setColor] = useState(0)
   const [slide, setSlide] = useState(0)
-  const [term, setTerm] = useState(12)
   const [more, setMore] = useState(false)
   const fav = useStore((s) => s.favs.includes(id))
   const toggleFav = useStore((s) => s.toggleFav)
@@ -30,7 +29,8 @@ export default function Product() {
 
   if (!p) return <div className="p-10 text-center">Mahsulot topilmadi</div>
   const d = discount(p)
-  const similar = products.filter((x) => x.cat === p.cat && x.id !== p.id).concat(products.filter((x) => x.brand === p.brand && x.cat !== p.cat)).slice(0, 8)
+  const visible = products.filter((x) => !x.hidden)
+  const similar = visible.filter((x) => x.cat === p.cat && x.id !== p.id).concat(visible.filter((x) => x.brand === p.brand && x.cat !== p.cat)).slice(0, 8)
   const views = ['old', 'yon', 'orqa']
 
   return (
@@ -87,23 +87,6 @@ export default function Product() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Installment */}
-      <div className="mx-2 mt-2 rounded-3xl bg-card p-4">
-        <div className="flex items-center justify-between">
-          <div className="font-bold">Muddatli to‘lov</div>
-          <span className="rounded-full bg-ok/15 px-2.5 py-1 text-xs font-bold text-ok">0% ustama</span>
-        </div>
-        <div className="mt-3 grid grid-cols-4 gap-1 rounded-2xl bg-chip p-1">
-          {terms.map((t) => (
-            <button key={t} onClick={() => setTerm(t)} className={`rounded-xl py-2 text-[13px] font-semibold transition ${t === term ? 'bg-card shadow-sm' : 'text-muted'}`}>{t} oy</button>
-          ))}
-        </div>
-        <div className="mt-3 flex items-baseline justify-between">
-          <span className="text-sm text-muted">Oylik to‘lov</span>
-          <span className="rounded-lg bg-accent-400 px-2 py-0.5 text-[17px] font-extrabold text-black">{som(monthly(p.price, term))}</span>
-        </div>
       </div>
 
       {/* Delivery */}
@@ -184,7 +167,7 @@ export default function Product() {
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
             <div className="text-[15px] leading-tight font-extrabold whitespace-nowrap">{som(p.price)}</div>
-            <div className="truncate text-xs text-muted">{som(monthly(p.price, term))} × {term} oy</div>
+            <div className="truncate text-xs text-ok">Ertaga bepul yetkazamiz</div>
           </div>
           {line ? (
             <div className="flex h-12 items-center gap-1 rounded-2xl bg-chip p-1">
