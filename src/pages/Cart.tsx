@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { Check, Minus, Plus, ShoppingCart, Trash2, Truck, Heart } from 'lucide-react'
 import { cartLines, cartTotals, useStore } from '../store'
-import ProductArt from '../components/ProductArt'
+import { ProductImage } from '../components/ProductArt'
 import { tintFor } from '../components/ProductCard'
 import { Empty, PrimaryButton, Section, TopBar } from '../components/ui'
 import ProductCard from '../components/ProductCard'
@@ -57,7 +57,7 @@ export default function Cart() {
           <div key={l.id + l.color} className="flex gap-3 p-3">
             <button onClick={() => toggleCheck(l.id, l.color)} className="self-center"><Box on={l.checked} /></button>
             <Link to={`/p/${l.id}`} className="grid size-[92px] shrink-0 place-items-center rounded-2xl" style={{ background: tintFor(l.p.cat) }}>
-              <ProductArt kind={l.p.art} color={l.p.colors[l.color]?.hex} className="size-20" />
+              <ProductImage p={l.p} color={l.color} className="size-20" />
             </Link>
             <div className="min-w-0 flex-1">
               <div className="text-[16px] font-extrabold">{som(l.p.price * l.qty)}</div>

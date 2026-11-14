@@ -22,9 +22,21 @@ npm run build:single # dist-single/index.html — bitta fayl
 Mahsulotlar ro‘yxati: `src/data/products.ts`. Logotip: `src/assets/logo.png`.
 
 ## Admin va Boshliq panellari
-- **Admin paneli** — bosh sahifadagi logotipni 5 marta ketma-ket bosing, parol: `2019`.
-  Buyurtmalar (holatini o‘zgartirish, mijoz ma’lumotlari) va mahsulotlar (qo‘shish, narx/chegirma/qoldiqni tahrirlash, yashirish, o‘chirish).
-- **Boshliq paneli** — Admin panelidagi admin belgisini (qalqon) 5 marta bosing, parol: `1988`.
-  Hisobot (tushum, buyurtmalar, o‘rtacha chek, top mahsulotlar, kategoriyalar, ombor), buyurtmalar, parollarni o‘zgartirish, katalogni tiklash, xodimlar harakatlari jurnali.
+- **Admin paneli**: bosh sahifadagi logotipni 5 marta ketma-ket bosing, parol `2019`.
+- **Boshliq paneli**: Admin panelidagi qalqon belgisini 5 marta bosing, parol `1988`.
+- Ikkala panelda ham mahsulot qo'shish, tahrirlash, rasm yuklash, yashirish va o'chirish bor.
+  Boshliq panelida qo'shimcha: hisobot, parollarni o'zgartirish, katalogni tiklash, xodimlar jurnali.
 
-> Diqqat: hozircha server yo‘q — ma’lumotlar va parollar har bir qurilmaning o‘zida saqlanadi. Haqiqiy do‘kon uchun backend (server + ma’lumotlar bazasi) kerak.
+## Server (Firebase)
+Ilova `avangard-447ad` Firebase loyihasiga ulangan (`src/firebase.ts`). Firestore'da:
+`products` (mahsulotlar va rasmlar), `orders` (buyurtmalar), `settings/main` (parollar), `logs` (jurnal).
+Baza bo'sh bo'lsa, birinchi ochilishda boshlang'ich katalog avtomatik yoziladi.
+
+1. Firebase Console → Firestore Database → **Rules** bo'limiga `firestore.rules` faylidagi matnni qo'yib, **Publish** bosing.
+2. Saytga joylash: `npm run build`, keyin `npx firebase-tools login` va `npx firebase-tools deploy`
+   (Firestore qoidalari ham, sayt ham joylanadi; manzil: https://avangard-447ad.web.app).
+
+> Diqqat: panellar hozircha faqat ilova ichidagi parol bilan himoyalangan, bazaga yozish esa ochiq.
+> Haqiqiy savdodan oldin Firebase Authentication qo'shib, qoidalarni faqat admin hisoblariga cheklash kerak.
+
+Sinov uchun mahalliy emulyator: `VITE_FIRESTORE_EMULATOR=1 npm run dev` (emulyator 127.0.0.1:8080 da ishlashi kerak).

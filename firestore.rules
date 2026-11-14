@@ -1,0 +1,41 @@
+rules_version = '2';
+
+// DIQQAT: bu boshlang'ich qoidalar. Admin va Boshliq panellari hozircha
+// faqat ilova ichidagi parol bilan himoyalangan, shuning uchun bazaga
+// yozish hamma uchun ochiq. Keyingi qadam: Firebase Authentication qo'shib,
+// mahsulot va sozlamalarni faqat admin hisoblari o'zgartira oladigan qilish.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Mahsulotlar: hamma o'qiydi; yozishda asosiy maydonlar tekshiriladi
+    match /products/{id} {
+      allow read: if true;
+      allow create, update: if request.resource.data.title is string
+                            && request.resource.data.price is number
+                            && request.resource.data.price > 0
+                            && request.resource.data.stock is number;
+      allow delete: if true;
+    }
+
+    // Buyurtmalar: mijoz yaratadi, panel holatini o'zgartiradi
+    match /orders/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.total is number
+                    && request.resource.data.items is list
+                    && request.resource.data.status == 'Yangi';
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow delete: if false;
+    }
+
+    // Parollar va sozlamalar
+    match /settings/{id} {
+      allow read, write: if true;
+    }
+
+    // Xodimlar harakatlari jurnali
+    match /logs/{id} {
+      allow read, create, delete: if true;
+      allow update: if false;
+    }
+  }
+}

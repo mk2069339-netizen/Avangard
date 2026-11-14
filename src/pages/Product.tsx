@@ -2,7 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ChevronLeft, Heart, Share2, Truck, ShieldCheck, RotateCcw, Store, ChevronRight, BadgeCheck, Minus, Plus, Star, MessageCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { discount, sampleReviews } from '../data/products'
-import ProductArt from '../components/ProductArt'
+import ProductArt, { ProductImage } from '../components/ProductArt'
 import ProductCard, { tintFor } from '../components/ProductCard'
 import { Section, Stars } from '../components/ui'
 import { useStore } from '../store'
@@ -31,7 +31,7 @@ export default function Product() {
   const d = discount(p)
   const visible = products.filter((x) => !x.hidden)
   const similar = visible.filter((x) => x.cat === p.cat && x.id !== p.id).concat(visible.filter((x) => x.brand === p.brand && x.cat !== p.cat)).slice(0, 8)
-  const views = ['old', 'yon', 'orqa']
+  const views = p.image ? ['rasm'] : ['old', 'yon', 'orqa']
 
   return (
     <div className="pb-40" ref={top}>
@@ -41,7 +41,7 @@ export default function Product() {
         <div onScroll={(e) => setSlide(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))} className="no-scrollbar snap-x-m relative flex aspect-square max-h-[460px] w-full overflow-x-auto">
           {views.map((v, i) => (
             <div key={v} className="snap-start-a grid w-full shrink-0 place-items-center">
-              <ProductArt kind={p.art} color={p.colors[color].hex} className={`h-[78%] w-[78%] drop-shadow-xl transition ${i === 1 ? 'scale-x-[-1]' : ''} ${i === 2 ? 'scale-90 opacity-90' : ''}`} />
+              <ProductImage p={p} color={color} className={`h-[78%] w-[78%] drop-shadow-xl transition ${i === 1 ? 'scale-x-[-1]' : ''} ${i === 2 ? 'scale-90 opacity-90' : ''}`} />
             </div>
           ))}
         </div>
@@ -75,7 +75,7 @@ export default function Product() {
           <span className="text-muted">{p.orders.toLocaleString('ru-RU')}+ buyurtma</span>
         </div>
 
-        {p.colors.length > 1 && (
+        {p.colors.length > 1 && !p.image && (
           <div className="mt-4">
             <div className="mb-2 text-[13px]"><span className="text-muted">Rang:</span> <b>{p.colors[color].name}</b></div>
             <div className="flex gap-2">

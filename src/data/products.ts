@@ -33,6 +33,9 @@ export interface Product {
   desc: string
   stock: number
   hidden?: boolean
+  /** Admin yuklagan surat (siqilgan JPEG, data URL) */
+  image?: string
+  createdAt?: number
 }
 
 export const categories: Category[] = [

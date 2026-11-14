@@ -8,7 +8,7 @@ import { Catalog, CategoryPage, SearchPage } from './pages/Listing'
 import { Favorites, Orders, Profile, Success } from './pages/Account'
 import { AdminPanel, BossPanel } from './pages/Admin'
 import BottomNav from './components/BottomNav'
-import { useStore } from './store'
+import { startSync, useStore } from './store'
 
 function Shell() {
   const { pathname } = useLocation()
@@ -18,6 +18,7 @@ function Shell() {
     document.documentElement.classList.toggle('dark', dark)
     document.querySelector('meta[name=theme-color]')?.setAttribute('content', dark ? '#18151f' : '#ffffff')
   }, [dark])
+  useEffect(() => { startSync() }, [])
   useEffect(() => { if (!pathname.startsWith('/p/')) window.scrollTo(0, 0) }, [pathname])
   const hideNav = /^\/(p\/|checkout|success|search|admin|boss)/.test(pathname)
 

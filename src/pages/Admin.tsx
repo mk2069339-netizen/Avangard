@@ -1,13 +1,13 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { create } from 'zustand'
 import {
   ChevronLeft, Delete, LogOut, Package, Phone, Plus, Search, ShieldCheck, Trash2, X, Eye, EyeOff,
-  Crown, TrendingUp, ShoppingBag, Receipt, CircleCheck, AlertTriangle, KeyRound, RotateCcw, History, Boxes,
+  Crown, ImagePlus, Cloud, CloudOff, TrendingUp, ShoppingBag, Receipt, CircleCheck, AlertTriangle, KeyRound, RotateCcw, History, Boxes,
 } from 'lucide-react'
 import { categories, discount, type ArtKind, type Product } from '../data/products'
-import { ORDER_STATUSES, useStore, type Order, type OrderStatus } from '../store'
-import ProductArt from '../components/ProductArt'
+import { ORDER_STATUSES, subscribeStaff, useStore, type Order, type OrderStatus } from '../store'
+import { ProductImage } from '../components/ProductArt'
 import { tintFor } from '../components/ProductCard'
 import { Mark, PrimaryButton } from '../components/ui'
 import { som } from '../format'
@@ -101,6 +101,8 @@ export function AdminPanel() {
   const tapIcon = useTapUnlock(5, () => nav('/boss'))
   const orders = useStore((s) => s.orders)
   const fresh = orders.filter((o) => o.status === 'Yangi').length
+  const unlocked = admin || boss
+  useEffect(() => (unlocked ? subscribeStaff() : undefined), [unlocked])
 
   if (!admin && !boss) return <PinGate role="admin" onOk={() => set('admin', true)} />
 
@@ -115,7 +117,7 @@ export function AdminPanel() {
           </button>
           <div className="flex-1 leading-tight">
             <div className="text-[16px] font-bold">Admin paneli</div>
-            <div className="text-[11.5px] text-muted">Avangard do‘koni</div>
+            <SyncBadge />
           </div>
           <button onClick={() => { set('admin', false); set('boss', false); nav('/') }} className="flex items-center gap-1 rounded-full bg-chip px-3 py-1.5 text-[13px] font-semibold" aria-label="Chiqish">
             <LogOut size={15} /> Chiqish
@@ -213,7 +215,7 @@ function ProductsAdmin({ who }: { who: 'admin' | 'boshliq' }) {
   const list = products.filter((p) => (cat === 'all' || p.cat === cat) && p.title.toLowerCase().includes(q.toLowerCase()))
 
   const blank = (): Product => ({
-    id: 'p' + Date.now().toString(36), title: '', brand: '', cat: 'fridge', price: 0, art: 'fridge',
+    id: 'p' + Date.now().toString(36), createdAt: Date.now(), title: '', brand: '', cat: 'fridge', price: 0, art: 'fridge',
     rating: 5, reviews: 0, orders: 0, colors: [{ name: 'Oq', hex: '#F7F7F9' }], specs: [], desc: '', stock: 10, badges: ['new'],
   })
 
@@ -235,7 +237,7 @@ function ProductsAdmin({ who }: { who: 'admin' | 'boshliq' }) {
         {list.map((p) => (
           <button key={p.id} onClick={() => setEdit(p)} className={`flex w-full items-center gap-3 p-3 text-left ${p.hidden ? 'opacity-50' : ''}`}>
             <span className="grid size-14 shrink-0 place-items-center rounded-xl" style={{ background: tintFor(p.cat) }}>
-              <ProductArt kind={p.art} color={p.colors[0]?.hex} className="size-12" />
+              <ProductImage p={p} className="size-12" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="line-clamp-1 text-[14px] font-medium">{p.title || 'Nomsiz'}</span>
@@ -245,7 +247,7 @@ function ProductsAdmin({ who }: { who: 'admin' | 'boshliq' }) {
           </button>
         ))}
       </div>
-      {edit && <ProductEditor initial={edit} onClose={() => setEdit(null)} onSave={(p) => { saveProduct(p, who); setEdit(null) }} who={who} />}
+      {edit && <ProductEditor initial={edit} onClose={() => setEdit(null)} onSave={async (p) => { if (await saveProduct(p, who)) setEdit(null) }} who={who} />}
     </div>
   )
 }
@@ -255,11 +257,14 @@ const artFor: Record<string, ArtKind> = {
   small: 'kettle', phone: 'phone', laptop: 'laptop', climate: 'heater', dish: 'dishwasher',
 }
 
-function ProductEditor({ initial, onClose, onSave, who }: { initial: Product; onClose: () => void; onSave: (p: Product) => void; who: 'admin' | 'boshliq' }) {
+function ProductEditor({ initial, onClose, onSave, who }: { initial: Product; onClose: () => void; onSave: (p: Product) => Promise<void>; who: 'admin' | 'boshliq' }) {
   const deleteProduct = useStore((s) => s.deleteProduct)
   const isNew = !useStore.getState().products.some((x) => x.id === initial.id)
   const [p, setP] = useState<Product>(initial)
   const [confirmDel, setConfirmDel] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [imgErr, setImgErr] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
   const up = (patch: Partial<Product>) => setP({ ...p, ...patch })
   const valid = p.title.trim().length > 2 && p.price > 0 && (!p.oldPrice || p.oldPrice > p.price)
 
@@ -272,9 +277,24 @@ function ProductEditor({ initial, onClose, onSave, who }: { initial: Product; on
           <button onClick={onClose} className="grid size-9 place-items-center rounded-full bg-chip" aria-label="Yopish"><X size={18} /></button>
         </div>
 
-        <div className="mb-3 grid h-28 place-items-center rounded-2xl" style={{ background: tintFor(p.cat) }}>
-          <ProductArt kind={p.art} color={p.colors[0]?.hex} className="size-24" />
+        <div className="relative mb-1 grid h-40 place-items-center rounded-2xl" style={{ background: tintFor(p.cat) }}>
+          <ProductImage p={p} className="size-32" />
+          <div className="absolute right-2 bottom-2 flex gap-1.5">
+            {p.image && <button onClick={() => up({ image: undefined })} className="flex h-9 items-center gap-1 rounded-xl bg-white/90 px-3 text-[13px] font-semibold text-[#e5322f] shadow"><Trash2 size={15} /> Rasm</button>}
+            <button onClick={() => fileRef.current?.click()} className="flex h-9 items-center gap-1 rounded-xl bg-white/90 px-3 text-[13px] font-semibold text-black shadow"><ImagePlus size={16} /> {p.image ? 'Almashtirish' : 'Rasm yuklash'}</button>
+          </div>
+          <input
+            ref={fileRef} id="pe-image" type="file" accept="image/*" className="hidden"
+            onChange={async (e) => {
+              const f = e.target.files?.[0]
+              e.target.value = ''
+              if (!f) return
+              setImgErr('')
+              try { up({ image: await compressImage(f) }) } catch { setImgErr('Rasmni o‘qib bo‘lmadi, boshqa fayl tanlang') }
+            }}
+          />
         </div>
+        <p className="mb-3 text-[11.5px] text-muted">{imgErr ? <span className="text-[#e5322f]">{imgErr}</span> : 'Rasm yuklanmasa, kategoriya illyustratsiyasi ko‘rsatiladi'}</p>
 
         <F label="Nomi"><input id="pe-title" value={p.title} onChange={(e) => up({ title: e.target.value })} placeholder="Masalan: Muzlatgich Artel 350 L" className={inp} /></F>
         <div className="grid grid-cols-2 gap-2">
@@ -310,10 +330,52 @@ function ProductEditor({ initial, onClose, onSave, who }: { initial: Product; on
               <button onClick={() => setConfirmDel(true)} className="grid size-12 place-items-center rounded-2xl bg-[#e5322f]/10 text-[#e5322f]" aria-label="O‘chirish"><Trash2 size={20} /></button>
             )
           )}
-          {!confirmDel && <PrimaryButton disabled={!valid} onClick={() => onSave({ ...p, title: p.title.trim(), brand: p.brand.trim() || 'Avangard' })} className="flex-1">Saqlash</PrimaryButton>}
+          {!confirmDel && <PrimaryButton disabled={!valid || saving} onClick={async () => { setSaving(true); await onSave({ ...p, title: p.title.trim(), brand: p.brand.trim() || 'Avangard' }); setSaving(false) }} className="flex-1">{saving ? 'Saqlanmoqda…' : isNew ? 'Qo‘shish' : 'Saqlash'}</PrimaryButton>}
           {confirmDel && <button onClick={() => setConfirmDel(false)} className="h-12 flex-1 rounded-2xl bg-chip font-semibold">Bekor</button>}
         </div>
       </div>
+    </div>
+  )
+}
+
+/** Rasmni 800px gacha kichraytirib, JPEG (≈100 KB) data URL qiladi — Firestore hujjatiga sig‘ishi uchun. */
+function compressImage(file: File, max = 800): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height))
+      const c = document.createElement('canvas')
+      c.width = Math.round(img.width * k)
+      c.height = Math.round(img.height * k)
+      const ctx = c.getContext('2d')!
+      ctx.fillStyle = '#fff'
+      ctx.fillRect(0, 0, c.width, c.height)
+      ctx.drawImage(img, 0, 0, c.width, c.height)
+      URL.revokeObjectURL(url)
+      let q = 0.82
+      let out = c.toDataURL('image/jpeg', q)
+      while (out.length > 700_000 && q > 0.4) { q -= 0.1; out = c.toDataURL('image/jpeg', q) }
+      resolve(out)
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('bad image')) }
+    img.src = url
+  })
+}
+
+function SyncBadge({ light }: { light?: boolean }) {
+  const sync = useStore((s) => s.sync)
+  const map = {
+    online: ['Server bilan ulangan', 'bg-ok'],
+    connecting: ['Serverga ulanmoqda…', 'bg-accent-400'],
+    offline: ['Oflayn — o‘zgarishlar keyin yuboriladi', 'bg-accent-400'],
+    denied: ['Serverga ruxsat yo‘q — qoidalarni sozlang', 'bg-[#e5322f]'],
+  } as const
+  const [t, c] = map[sync]
+  return (
+    <div className={`flex items-center gap-1.5 text-[11.5px] ${light ? 'text-white/75' : 'text-muted'}`}>
+      {sync === 'online' ? <Cloud size={12} /> : <CloudOff size={12} />}
+      <span className={`size-1.5 rounded-full ${c}`} /> {t}
     </div>
   )
 }
@@ -332,7 +394,8 @@ function F({ label, children }: { label: string; children: React.ReactNode }) {
 export function BossPanel() {
   const nav = useNavigate()
   const { boss, set } = useAuth()
-  const [tab, setTab] = useState<'stats' | 'orders' | 'settings'>('stats')
+  const [tab, setTab] = useState<'stats' | 'orders' | 'products' | 'settings'>('stats')
+  useEffect(() => (boss ? subscribeStaff() : undefined), [boss])
   if (!boss) return <PinGate role="boss" onOk={() => set('boss', true)} />
 
   return (
@@ -343,18 +406,19 @@ export function BossPanel() {
           <span className="grid size-9 place-items-center rounded-xl bg-accent-400 text-black"><Crown size={20} /></span>
           <div className="flex-1 leading-tight">
             <div className="text-[16px] font-bold">Boshliq paneli</div>
-            <div className="text-[11.5px] opacity-70">Savdo, nazorat va sozlamalar</div>
+            <SyncBadge light />
           </div>
           <button onClick={() => { set('boss', false); set('admin', false); nav('/') }} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-[13px] font-semibold"><LogOut size={15} /> Chiqish</button>
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-1 rounded-2xl bg-white/10 p-1">
-          {([['stats', 'Hisobot'], ['orders', 'Buyurtmalar'], ['settings', 'Sozlamalar']] as const).map(([k, l]) => (
-            <button key={k} onClick={() => setTab(k)} className={`rounded-xl py-2 text-[13px] font-semibold transition ${tab === k ? 'bg-white text-black' : 'text-white/80'}`}>{l}</button>
+        <div className="mt-3 grid grid-cols-4 gap-1 rounded-2xl bg-white/10 p-1">
+          {([['stats', 'Hisobot'], ['orders', 'Buyurtma'], ['products', 'Mahsulot'], ['settings', 'Sozlama']] as const).map(([k, l]) => (
+            <button key={k} onClick={() => setTab(k)} className={`rounded-xl py-2 text-[12.5px] font-semibold transition ${tab === k ? 'bg-white text-black' : 'text-white/80'}`}>{l}</button>
           ))}
         </div>
       </header>
       {tab === 'stats' && <BossStats />}
       {tab === 'orders' && <OrdersAdmin who="boshliq" />}
+      {tab === 'products' && <ProductsAdmin who="boshliq" />}
       {tab === 'settings' && <BossSettings />}
     </div>
   )
@@ -436,7 +500,7 @@ function BossStats() {
           <div key={p.id} className="flex justify-between gap-2 py-1.5 text-[13px]"><span className="line-clamp-1">{p.title}</span><b className="shrink-0 text-[#e5322f]">{p.stock} dona</b></div>
         )) : <Muted>Hamma mahsulot yetarli</Muted>}
       </Card>
-      <p className="px-4 pt-3 text-center text-[11.5px] text-muted">Hisobot shu qurilmadagi buyurtmalar asosida tuzilgan.</p>
+      <p className="px-4 pt-3 text-center text-[11.5px] text-muted">Hisobot serverdagi barcha buyurtmalar asosida (oxirgi 500 ta).</p>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import type { ArtKind } from '../data/products'
+import type { ArtKind, Product } from '../data/products'
 
 interface Props {
   kind: ArtKind
@@ -246,4 +246,10 @@ function isDark(hex: string) {
   const n = parseInt(hex.slice(1), 16)
   const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255
   return 0.299 * r + 0.587 * g + 0.114 * b < 110
+}
+
+/** Mahsulot surati: admin yuklagan rasm bo‘lsa — rasm, aks holda illyustratsiya. */
+export function ProductImage({ p, color, className = '' }: { p: Pick<Product, 'art' | 'image' | 'colors' | 'title'>; color?: number; className?: string }) {
+  if (p.image) return <img src={p.image} alt={p.title} loading="lazy" draggable={false} className={`${className} rounded-xl object-contain`} />
+  return <ProductArt kind={p.art} color={p.colors[color ?? 0]?.hex ?? p.colors[0]?.hex} className={className} />
 }

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Heart, Plus, Star, Check } from 'lucide-react'
 import { useState } from 'react'
-import ProductArt from './ProductArt'
+import { ProductImage } from './ProductArt'
 import { discount, type Product } from '../data/products'
 import { useStore } from '../store'
 import { som } from '../format'
@@ -31,7 +31,7 @@ export default function ProductCard({ p, wide = false }: { p: Product; wide?: bo
     <Link to={`/p/${p.id}`} className={`group animate-rise flex flex-col overflow-hidden rounded-2xl bg-card ${wide ? 'w-[46vw] max-w-[200px] shrink-0 snap-start-a' : ''}`}>
       <div className="relative aspect-[3/4] overflow-hidden rounded-2xl" style={{ background: tintFor(p.cat) }}>
         <div className="absolute inset-0 dark:bg-black/25" />
-        <ProductArt kind={p.art} color={p.colors[0].hex} className="absolute inset-0 m-auto h-[82%] w-[82%] transition duration-500 group-active:scale-95" />
+        <ProductImage p={p} className="absolute inset-0 m-auto h-[82%] w-[82%] transition duration-500 group-active:scale-95" />
         <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
           {d > 0 && <span className="rounded-md bg-[#e5322f] px-1.5 py-0.5 text-[11px] font-bold text-white">−{d}%</span>}
           {p.badges?.slice(0, 1).filter((b) => b !== 'sale').map((b) => (

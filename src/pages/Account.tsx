@@ -1,7 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Heart, Package, Moon, Sun, MapPin, Globe, Headphones, Info, ChevronRight, Gift, Bell, CircleCheck, ShieldCheck, Percent } from 'lucide-react'
 import { ProductGrid } from '../components/ProductCard'
-import ProductArt from '../components/ProductArt'
+import { ProductImage } from '../components/ProductArt'
 import { tintFor } from '../components/ProductCard'
 import { Empty, Mark, PrimaryButton, TopBar } from '../components/ui'
 import { useStore } from '../store'
@@ -25,7 +25,7 @@ export function Favorites() {
 }
 
 export function Profile() {
-  const { dark, toggleDark, orders, city, favs } = useStore()
+  const { dark, toggleDark, myOrders: orders, city, favs } = useStore()
   const rows = [
     { i: Package, t: 'Buyurtmalarim', s: orders.length ? `${orders.length} ta` : '', to: '/orders' },
     { i: Heart, t: 'Saralangan', s: favs.length ? `${favs.length}` : '', to: '/favorites' },
@@ -86,7 +86,7 @@ export function Profile() {
 
 export function Orders() {
   const nav = useNavigate()
-  const orders = useStore((s) => s.orders)
+  const orders = useStore((s) => s.myOrders)
   const products = useStore((s) => s.products)
   return (
     <div className="pb-28">
@@ -107,7 +107,7 @@ export function Orders() {
                   const p = products.find((x) => x.id === it.id)
                   return p ? (
                     <Link key={it.id + it.color} to={`/p/${p.id}`} className="grid size-14 shrink-0 place-items-center rounded-xl" style={{ background: tintFor(p.cat) }}>
-                      <ProductArt kind={p.art} color={p.colors[it.color]?.hex} className="size-12" />
+                      <ProductImage p={p} color={it.color} className="size-12" />
                     </Link>
                   ) : null
                 })}

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { CreditCard, MapPin, Store, Truck, Banknote, CircleCheck } from 'lucide-react'
 import { cartLines, cartTotals, useStore } from '../store'
 import { PrimaryButton, TopBar } from '../components/ui'
-import ProductArt from '../components/ProductArt'
+import { ProductImage } from '../components/ProductArt'
 import { tintFor } from '../components/ProductCard'
 import { deliveryDate, som } from '../format'
 
@@ -22,15 +22,18 @@ export default function Checkout() {
   const [addr, setAddr] = useState('')
   const valid = name.trim().length > 1 && phone.replace(/\D/g, '').length >= 12 && (mode === 'pickup' || addr.trim().length > 3)
 
-  const submit = () => {
-    const id = placeOrder({
+  const [sending, setSending] = useState(false)
+  const submit = async () => {
+    setSending(true)
+    const id = await placeOrder({
       total: t.sum,
       payment: pay === 'card' ? 'Karta orqali' : 'Qabul qilganda',
       customer: name.trim(),
       phone: phone.trim(),
       address: mode === 'pickup' ? `${city}, Avangard topshirish punkti` : `${city}, ${addr}`,
     })
-    nav(`/success/${id}`, { replace: true })
+    setSending(false)
+    if (id) nav(`/success/${id}`, { replace: true })
   }
 
   if (!lines.length) return <div className="p-10 text-center">Savat bo‘sh</div>
@@ -83,7 +86,7 @@ export default function Checkout() {
         <div className="no-scrollbar flex gap-2 overflow-x-auto">
           {lines.map((l) => (
             <div key={l.id + l.color} className="relative grid size-16 shrink-0 place-items-center rounded-xl" style={{ background: tintFor(l.p.cat) }}>
-              <ProductArt kind={l.p.art} color={l.p.colors[l.color]?.hex} className="size-14" />
+              <ProductImage p={l.p} color={l.color} className="size-14" />
               {l.qty > 1 && <span className="absolute -top-1 -right-1 rounded-full bg-[#15131f] px-1.5 text-[10px] font-bold text-white">×{l.qty}</span>}
             </div>
           ))}
@@ -92,8 +95,8 @@ export default function Checkout() {
       </Card>
 
       <div className="pb-safe fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[520px] border-t border-line bg-card/95 px-3 pt-3 backdrop-blur-xl">
-        <PrimaryButton disabled={!valid} onClick={submit}>
-          Buyurtma berish · {som(t.sum)}
+        <PrimaryButton disabled={!valid || sending} onClick={submit}>
+          {sending ? 'Yuborilmoqda…' : <>Buyurtma berish · {som(t.sum)}</>}
         </PrimaryButton>
         {!valid && <p className="mt-1.5 text-center text-[11.5px] text-muted">Ism, telefon{mode === 'courier' ? ' va manzil' : ''}ni kiriting</p>}
       </div>
