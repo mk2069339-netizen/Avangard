@@ -1,0 +1,36 @@
+name: Saytga joylash (muhammadkomilov.web.app)
+
+on:
+  push:
+    branches: [main, claude/m3nga-avangard-ilovasi-efcl2c]
+  workflow_dispatch:
+
+concurrency:
+  group: hosting-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Firebase Hosting'ga joylash
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA" ]; then
+            echo "::error::GitHub'da FIREBASE_SERVICE_ACCOUNT secret qo'shilmagan (README'dagi yo'riqnomaga qarang)"
+            exit 1
+          fi
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          PROJECT=$(jq -r .project_id "$RUNNER_TEMP/sa.json")
+          echo "Firebase loyihasi: $PROJECT"
+          npx --yes firebase-tools@15 deploy --only hosting --project "$PROJECT" --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"
