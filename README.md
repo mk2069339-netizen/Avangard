@@ -44,4 +44,6 @@ Baza bo'sh bo'lsa, birinchi ochilishda boshlang'ich katalog avtomatik yoziladi.
 > Diqqat: panellar hozircha faqat ilova ichidagi parol bilan himoyalangan, bazaga yozish esa ochiq.
 > Haqiqiy savdodan oldin Firebase Authentication qo'shib, qoidalarni faqat admin hisoblariga cheklash kerak.
 
+Namuna (serversiz) versiya: `npm run build:demo` → `dist-single/index.html`, hamma ma'lumot qurilmada saqlanadi.
+
 Sinov uchun mahalliy emulyator: `VITE_FIRESTORE_EMULATOR=1 npm run dev` (emulyator 127.0.0.1:8080 da ishlashi kerak).

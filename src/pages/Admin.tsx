@@ -370,6 +370,7 @@ function SyncBadge({ light }: { light?: boolean }) {
     connecting: ['Serverga ulanmoqda…', 'bg-accent-400'],
     offline: ['Oflayn — o‘zgarishlar keyin yuboriladi', 'bg-accent-400'],
     denied: ['Serverga ruxsat yo‘q — qoidalarni sozlang', 'bg-[#e5322f]'],
+    demo: ['Namuna rejimi — ma’lumotlar shu qurilmada', 'bg-accent-400'],
   } as const
   const [t, c] = map[sync]
   return (

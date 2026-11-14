@@ -25,7 +25,10 @@ export interface Order {
 }
 
 export interface LogEntry { id?: string; t: string; who: 'admin' | 'boshliq'; text: string }
-export type Sync = 'connecting' | 'online' | 'offline' | 'denied'
+export type Sync = 'connecting' | 'online' | 'offline' | 'denied' | 'demo'
+
+/** Namuna rejimi (VITE_DEMO=1): serversiz, hamma ma'lumot shu qurilmada. Artefakt ko'rinishi uchun. */
+export const DEMO = import.meta.env.VITE_DEMO === '1'
 
 interface State {
   products: Product[]
@@ -88,6 +91,7 @@ export const useStore = create<State>()(
         get().showToast(isDenied(e) ? 'Serverga ruxsat yo‘q (Firestore qoidalari)' : 'Server bilan aloqa yo‘q, keyinroq urinib ko‘ring')
       }
       const addLog = (who: LogEntry['who'], text: string) =>
+        DEMO ? set({ log: [{ t: new Date().toISOString(), who, text }, ...get().log].slice(0, 100) }) :
         addDoc(collection(db, 'logs'), { t: new Date().toISOString(), who, text }).catch(console.error)
 
       return {
@@ -104,7 +108,7 @@ export const useStore = create<State>()(
         adminPass: '2019',
         bossPass: '1988',
         log: [],
-        sync: 'connecting',
+        sync: DEMO ? 'demo' : 'connecting',
         addToCart: (id, color = 0) => {
           const cart = [...get().cart]
           const i = cart.findIndex((c) => c.id === id && c.color === color)
@@ -141,6 +145,17 @@ export const useStore = create<State>()(
             return p ? [{ ...c, title: p.title, price: p.price }] : []
           })
           const order: Order = { ...o, id, items, date: new Date().toISOString(), status: 'Yangi' }
+          if (DEMO) {
+            const sold = new Map<string, number>()
+            items.forEach((i) => sold.set(i.id, (sold.get(i.id) ?? 0) + i.qty))
+            set({
+              orders: [order, ...get().orders],
+              myOrders: [order, ...get().myOrders],
+              cart: get().cart.filter((c) => !c.checked),
+              products: products.map((p) => (sold.has(p.id) ? { ...p, stock: Math.max(0, p.stock - sold.get(p.id)!), orders: p.orders + sold.get(p.id)! } : p)),
+            })
+            return id
+          }
           try {
             await setDoc(doc(db, 'orders', id), clean(order))
             // ombordagi qoldiq va sotuvlar sonini yangilash
@@ -165,6 +180,12 @@ export const useStore = create<State>()(
 
         saveProduct: async (p, who = 'admin') => {
           const exists = get().products.some((x) => x.id === p.id)
+          if (DEMO) {
+            set({ products: exists ? get().products.map((x) => (x.id === p.id ? p : x)) : [p, ...get().products] })
+            addLog(who, `${exists ? 'Tahrirlandi' : 'Qo‘shildi'}: ${p.title}`)
+            get().showToast(exists ? 'Saqlandi' : 'Mahsulot qo‘shildi')
+            return true
+          }
           try {
             await setDoc(doc(db, 'products', p.id), clean(p))
             addLog(who, `${exists ? 'Tahrirlandi' : 'Qo‘shildi'}: ${p.title}`)
@@ -177,6 +198,12 @@ export const useStore = create<State>()(
         },
         deleteProduct: async (id, who = 'admin') => {
           const p = get().products.find((x) => x.id === id)
+          if (DEMO) {
+            set({ products: get().products.filter((x) => x.id !== id), cart: get().cart.filter((c) => c.id !== id) })
+            if (p) addLog(who, `O‘chirildi: ${p.title}`)
+            get().showToast('Mahsulot o‘chirildi')
+            return
+          }
           try {
             await deleteDoc(doc(db, 'products', id))
             set({ cart: get().cart.filter((c) => c.id !== id) })
@@ -187,6 +214,12 @@ export const useStore = create<State>()(
           }
         },
         setOrderStatus: async (id, status, who = 'admin') => {
+          if (DEMO) {
+            const upd = (l: Order[]) => l.map((o) => (o.id === id ? { ...o, status } : o))
+            set({ orders: upd(get().orders), myOrders: upd(get().myOrders) })
+            addLog(who, `Buyurtma №${id} → ${status}`)
+            return
+          }
           try {
             await updateDoc(doc(db, 'orders', id), { status })
             addLog(who, `Buyurtma №${id} → ${status}`)
@@ -195,6 +228,12 @@ export const useStore = create<State>()(
           }
         },
         setPasswords: async (adminPass, bossPass) => {
+          if (DEMO) {
+            set({ adminPass, bossPass })
+            addLog('boshliq', 'Parollar o‘zgartirildi')
+            get().showToast('Parollar yangilandi')
+            return
+          }
           try {
             await setDoc(doc(db, 'settings', 'main'), { adminPass, bossPass }, { merge: true })
             addLog('boshliq', 'Parollar o‘zgartirildi')
@@ -204,6 +243,12 @@ export const useStore = create<State>()(
           }
         },
         resetCatalog: async () => {
+          if (DEMO) {
+            set({ products: seedProducts })
+            addLog('boshliq', 'Katalog boshlang‘ich holatga qaytarildi')
+            get().showToast('Katalog tiklandi')
+            return
+          }
           try {
             const snap = await getDocs(collection(db, 'products'))
             const batch = writeBatch(db)
@@ -217,6 +262,7 @@ export const useStore = create<State>()(
           }
         },
         clearLog: async () => {
+          if (DEMO) { set({ log: [] }); return }
           try {
             const snap = await getDocs(collection(db, 'logs'))
             const batch = writeBatch(db)
@@ -236,7 +282,10 @@ export const useStore = create<State>()(
         return { cart: o.cart ?? [], favs: o.favs ?? [], dark: o.dark ?? false, recent: o.recent ?? [], city: o.city ?? 'Toshkent' } as unknown as State
       },
       // Mahsulotlar oflayn ko‘rinishi uchun keshlanadi; buyurtmalar va parollar faqat serverda
-      partialize: (s) => ({ products: s.products, cart: s.cart, favs: s.favs, dark: s.dark, myOrderIds: s.myOrderIds, recent: s.recent, city: s.city }),
+      partialize: (s) => ({
+        products: s.products, cart: s.cart, favs: s.favs, dark: s.dark, myOrderIds: s.myOrderIds, recent: s.recent, city: s.city,
+        ...(DEMO ? { orders: s.orders, myOrders: s.myOrders, log: s.log, adminPass: s.adminPass, bossPass: s.bossPass } : {}),
+      }),
     },
   ),
 )
@@ -248,7 +297,7 @@ let seeding = false
 
 /** Ilova ochilganda: mahsulotlar va sozlamalarni real vaqtda tinglash. */
 export function startSync() {
-  if (started) return
+  if (started || DEMO) return
   started = true
   onSnapshot(
     collection(db, 'products'),
@@ -289,6 +338,7 @@ export function startSync() {
 let myOrdersUnsub: Unsubscribe | undefined
 /** Mijozning o‘z buyurtmalari (shu qurilmadan berilganlar) holatini kuzatish. */
 export function subscribeMyOrders() {
+  if (DEMO) return
   myOrdersUnsub?.()
   const ids = useStore.getState().myOrderIds.slice(0, 30)
   if (!ids.length) return
@@ -301,6 +351,7 @@ export function subscribeMyOrders() {
 
 /** Admin/Boshliq paneli ochiq turganda: barcha buyurtmalar va jurnal. */
 export function subscribeStaff(): () => void {
+  if (DEMO) return () => {}
   const u1 = onSnapshot(
     query(collection(db, 'orders'), orderBy('date', 'desc'), limit(500)),
     (snap) => useStore.setState({ orders: snap.docs.map((d) => d.data() as Order) }),

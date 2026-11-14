@@ -28,6 +28,6 @@ export const db = firestore
 if (import.meta.env.VITE_FIRESTORE_EMULATOR) connectFirestoreEmulator(db, '127.0.0.1', 8080)
 
 // Analitika faqat qo'llab-quvvatlanadigan brauzerlarda yoqiladi
-import('firebase/analytics')
+if (import.meta.env.VITE_DEMO !== '1') import('firebase/analytics')
   .then(({ isSupported, getAnalytics }) => isSupported().then((ok) => ok && getAnalytics(app)))
   .catch(() => {})

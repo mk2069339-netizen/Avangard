@@ -2,13 +2,14 @@
   "name": "avangard",
   "private": true,
   "version": "1.0.0",
-  "description": "Avangard — maishiy texnika marketpleysi ilovasi",
+  "description": "Avangard \u2014 maishiy texnika marketpleysi ilovasi",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "build:single": "vite build --mode single",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:demo": "VITE_DEMO=1 vite build --mode single"
   },
   "dependencies": {
     "firebase": "^12.19.0",
