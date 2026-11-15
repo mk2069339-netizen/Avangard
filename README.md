@@ -22,10 +22,18 @@ npm run build:single # dist-single/index.html — bitta fayl
 Mahsulotlar ro‘yxati: `src/data/products.ts`. Logotip: `src/assets/logo.png`.
 
 ## Admin va Boshliq panellari
-- **Admin paneli**: bosh sahifadagi logotipni 5 marta ketma-ket bosing, parol `2019`.
-- **Boshliq paneli**: Admin panelidagi qalqon belgisini 5 marta bosing, parol `1988`.
+- **Admin paneli**: bosh sahifadagi logotipni 5 marta ketma-ket bosing → Admin paroli.
+- **Boshliq paneli**: Admin panelidagi qalqon belgisini 5 marta bosing → Boshliq paroli.
+- Kirish Firebase Authentication (Email/Password) orqali: `admin@avangard.app` va `boshliq@avangard.app`.
+  Bazaga mahsulot qo'shish/o'zgartirish va buyurtmalarni ko'rish faqat shu hisoblarga ruxsat etilgan (`firestore.rules`).
 - Ikkala panelda ham mahsulot qo'shish, tahrirlash, rasm yuklash, yashirish va o'chirish bor.
-  Boshliq panelida qo'shimcha: hisobot, parollarni o'zgartirish, katalogni tiklash, xodimlar jurnali.
+  Boshliq panelida qo'shimcha: hisobot, o'z parolini o'zgartirish, katalogni tiklash, xodimlar jurnali.
+
+### Bir martalik sozlash (Firebase Console, `avangard-447ad`)
+1. Authentication → Get started → Sign-in method → **Email/Password** ni yoqing.
+2. Authentication → Users → **Add user**: `admin@avangard.app` va `boshliq@avangard.app` (har biriga kuchli parol, kamida 6 belgi).
+3. Firestore → Rules: `firestore.rules` matnini qo'yib, **Publish**.
+4. (Tavsiya) Authentication → Settings → User actions → **Enable create (sign-up)** ni o'chiring.
 
 ## Server (Firebase)
 Ilova `avangard-447ad` Firebase loyihasiga ulangan (`src/firebase.ts`). Firestore'da:
@@ -41,9 +49,7 @@ Baza bo'sh bo'lsa, birinchi ochilishda boshlang'ich katalog avtomatik yoziladi.
    - Actions → «Saytga joylash» → **Run workflow**.
    Qo'lda joylash: `npm run build && npx firebase-tools deploy --only hosting`.
 
-> Diqqat: panellar hozircha faqat ilova ichidagi parol bilan himoyalangan, bazaga yozish esa ochiq.
-> Haqiqiy savdodan oldin Firebase Authentication qo'shib, qoidalarni faqat admin hisoblariga cheklash kerak.
 
 Namuna (serversiz) versiya: `npm run build:demo` → `dist-single/index.html`, hamma ma'lumot qurilmada saqlanadi.
 
-Sinov uchun mahalliy emulyator: `VITE_FIRESTORE_EMULATOR=1 npm run dev` (emulyator 127.0.0.1:8080 da ishlashi kerak).
+Sinov uchun mahalliy emulyator: `npx firebase-tools emulators:start --only firestore,auth`, keyin `VITE_FIRESTORE_EMULATOR=1 npm run dev`.

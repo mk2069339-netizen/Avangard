@@ -1,23 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { create } from 'zustand'
+import { changeOwnPassword, isDemo, staffSignIn, staffSignOut, useSession, ADMIN_EMAIL } from '../auth'
 import {
   ChevronLeft, Delete, LogOut, Package, Phone, Plus, Search, ShieldCheck, Trash2, X, Eye, EyeOff,
   Crown, ImagePlus, Cloud, CloudOff, TrendingUp, ShoppingBag, Receipt, CircleCheck, AlertTriangle, KeyRound, RotateCcw, History, Boxes,
 } from 'lucide-react'
 import { categories, discount, type ArtKind, type Product } from '../data/products'
-import { ORDER_STATUSES, subscribeStaff, useStore, type Order, type OrderStatus } from '../store'
+import { ORDER_STATUSES, orderNo, subscribeStaff, useStore, type Order, type OrderStatus } from '../store'
 import { ProductImage } from '../components/ProductArt'
 import { tintFor } from '../components/ProductCard'
 import { Mark, PrimaryButton } from '../components/ui'
 import { som } from '../format'
 
-/* ---------- Sessiya (faqat xotirada, sahifa yangilansa qayta parol so‘raladi) ---------- */
-const useAuth = create<{ admin: boolean; boss: boolean; set: (k: 'admin' | 'boss', v: boolean) => void }>((set) => ({
-  admin: false,
-  boss: false,
-  set: (k, v) => set({ [k]: v } as Partial<{ admin: boolean; boss: boolean }>),
-}))
 
 /** 5 marta ketma-ket bosishni sanaydi (har bosish orasida 1.5 soniyadan kam). */
 export function useTapUnlock(times: number, onUnlock: () => void) {
@@ -44,7 +38,56 @@ const statusColor: Record<OrderStatus, string> = {
   'Bekor qilindi': 'bg-[#e5322f] text-white',
 }
 
-/* ---------- PIN kirish oynasi ---------- */
+/* ---------- Kirish oynasi ---------- */
+function Gate({ role }: { role: 'admin' | 'boss' }) {
+  const setRole = useSession((s) => s.setRole)
+  const ready = useSession((s) => s.ready)
+  if (isDemo) return <PinGate role={role} onOk={() => setRole(role)} />
+  if (!ready) return <div className="grid min-h-dvh place-items-center text-muted">Yuklanmoqda…</div>
+  return <PasswordGate role={role} />
+}
+
+function PasswordGate({ role }: { role: 'admin' | 'boss' }) {
+  const nav = useNavigate()
+  const [pw, setPw] = useState('')
+  const [show, setShow] = useState(false)
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  const dark = role === 'boss'
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setBusy(true); setErr('')
+    const res = await staffSignIn(role, pw)
+    setBusy(false)
+    if (res) { setErr(res); setPw('') }
+  }
+  return (
+    <div className={`flex min-h-dvh flex-col items-center px-6 pt-6 pb-10 ${dark ? 'bg-[#0f0d16] text-white' : 'bg-card'}`}>
+      <button onClick={() => nav('/')} className="self-start grid size-10 place-items-center rounded-full active:bg-chip" aria-label="Orqaga"><ChevronLeft /></button>
+      <div className={`mt-6 grid size-20 place-items-center rounded-3xl ${dark ? 'bg-accent-400 text-black' : 'bg-brand-600 text-white'}`}>
+        {dark ? <Crown size={38} /> : <ShieldCheck size={38} />}
+      </div>
+      <h1 className="mt-5 text-2xl font-extrabold">{dark ? 'Boshliq paneli' : 'Admin paneli'}</h1>
+      <p className={`mt-1 text-sm ${dark ? 'text-white/60' : 'text-muted'}`}>Parolingizni kiriting</p>
+      <form onSubmit={submit} className={`mt-8 w-full max-w-[320px] ${err ? 'animate-[shake_.35s]' : ''}`}>
+        <label className={`flex h-14 items-center gap-2 rounded-2xl px-4 ${dark ? 'bg-white/8' : 'bg-chip'} focus-within:ring-2 ${dark ? 'focus-within:ring-accent-400' : 'focus-within:ring-brand-600'}`}>
+          <KeyRound size={20} className="opacity-60" />
+          <input
+            id={`pw-${role}`} type={show ? 'text' : 'password'} autoComplete="current-password" autoFocus
+            value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Parol"
+            className="h-full min-w-0 flex-1 bg-transparent text-[17px] outline-none placeholder:opacity-50"
+          />
+          <button type="button" onClick={() => setShow(!show)} aria-label={show ? 'Yashirish' : 'Ko‘rsatish'} className="opacity-60">{show ? <EyeOff size={20} /> : <Eye size={20} />}</button>
+        </label>
+        <p className="mt-3 min-h-5 text-center text-sm font-medium text-[#e5322f]">{err}</p>
+        <button disabled={!pw || busy} className={`mt-3 h-13 w-full rounded-2xl py-3.5 text-[16px] font-bold transition active:scale-[.98] disabled:opacity-40 ${dark ? 'bg-accent-400 text-black' : 'bg-brand-600 text-white'}`}>
+          {busy ? 'Tekshirilmoqda…' : 'Kirish'}
+        </button>
+      </form>
+    </div>
+  )
+}
+
 function PinGate({ role, onOk }: { role: 'admin' | 'boss'; onOk: () => void }) {
   const nav = useNavigate()
   const pass = useStore((s) => (role === 'admin' ? s.adminPass : s.bossPass))
@@ -96,15 +139,16 @@ function PinGate({ role, onOk }: { role: 'admin' | 'boss'; onOk: () => void }) {
 /* ======================= ADMIN PANELI ======================= */
 export function AdminPanel() {
   const nav = useNavigate()
-  const { admin, boss, set } = useAuth()
+  const role = useSession((s) => s.role)
+  const boss = role === 'boss'
   const [tab, setTab] = useState<'orders' | 'products'>('orders')
   const tapIcon = useTapUnlock(5, () => nav('/boss'))
   const orders = useStore((s) => s.orders)
   const fresh = orders.filter((o) => o.status === 'Yangi').length
-  const unlocked = admin || boss
+  const unlocked = role === 'admin' || boss
   useEffect(() => (unlocked ? subscribeStaff() : undefined), [unlocked])
 
-  if (!admin && !boss) return <PinGate role="admin" onOk={() => set('admin', true)} />
+  if (!unlocked) return <Gate role="admin" />
 
   return (
     <div className="min-h-dvh pb-10">
@@ -119,7 +163,7 @@ export function AdminPanel() {
             <div className="text-[16px] font-bold">Admin paneli</div>
             <SyncBadge />
           </div>
-          <button onClick={() => { set('admin', false); set('boss', false); nav('/') }} className="flex items-center gap-1 rounded-full bg-chip px-3 py-1.5 text-[13px] font-semibold" aria-label="Chiqish">
+          <button onClick={async () => { await staffSignOut(); nav('/') }} className="flex items-center gap-1 rounded-full bg-chip px-3 py-1.5 text-[13px] font-semibold" aria-label="Chiqish">
             <LogOut size={15} /> Chiqish
           </button>
         </div>
@@ -173,7 +217,7 @@ function OrderCard({ o, onStatus }: { o: Order; onStatus: (s: OrderStatus) => vo
     <div className="rounded-3xl bg-card p-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="font-bold">№ {o.id}</div>
+          <div className="font-bold">№ {orderNo(o.id)}</div>
           <div className="text-[12px] text-muted">{new Date(o.date).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })}</div>
         </div>
         <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${statusColor[o.status]}`}>{o.status}</span>
@@ -394,10 +438,10 @@ function F({ label, children }: { label: string; children: React.ReactNode }) {
 /* ======================= BOSHLIQ PANELI ======================= */
 export function BossPanel() {
   const nav = useNavigate()
-  const { boss, set } = useAuth()
+  const boss = useSession((s) => s.role) === 'boss'
   const [tab, setTab] = useState<'stats' | 'orders' | 'products' | 'settings'>('stats')
   useEffect(() => (boss ? subscribeStaff() : undefined), [boss])
-  if (!boss) return <PinGate role="boss" onOk={() => set('boss', true)} />
+  if (!boss) return <Gate role="boss" />
 
   return (
     <div className="min-h-dvh pb-10">
@@ -409,7 +453,7 @@ export function BossPanel() {
             <div className="text-[16px] font-bold">Boshliq paneli</div>
             <SyncBadge light />
           </div>
-          <button onClick={() => { set('boss', false); set('admin', false); nav('/') }} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-[13px] font-semibold"><LogOut size={15} /> Chiqish</button>
+          <button onClick={async () => { await staffSignOut(); nav('/') }} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-[13px] font-semibold"><LogOut size={15} /> Chiqish</button>
         </div>
         <div className="mt-3 grid grid-cols-4 gap-1 rounded-2xl bg-white/10 p-1">
           {([['stats', 'Hisobot'], ['orders', 'Buyurtma'], ['products', 'Mahsulot'], ['settings', 'Sozlama']] as const).map(([k, l]) => (
@@ -506,6 +550,32 @@ function BossStats() {
   )
 }
 
+function OwnPassword() {
+  const [cur, setCur] = useState('')
+  const [next, setNext] = useState('')
+  const [next2, setNext2] = useState('')
+  const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null)
+  const [busy, setBusy] = useState(false)
+  const ok = cur.length > 0 && next.length >= 6 && next === next2
+  return (
+    <Card title={<span className="flex items-center gap-2"><KeyRound size={18} /> Parolni o‘zgartirish</span>}>
+      <F label="Hozirgi parol"><input id="op-cur" type="password" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)} className={inp} /></F>
+      <F label="Yangi parol (kamida 6 belgi)"><input id="op-new" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} className={inp} /></F>
+      <F label="Yangi parolni takrorlang"><input id="op-new2" type="password" autoComplete="new-password" value={next2} onChange={(e) => setNext2(e.target.value)} className={inp} /></F>
+      {next2 && next !== next2 && <p className="mb-2 text-[12px] text-[#e5322f]">Parollar bir xil emas</p>}
+      {msg && <p className={`mb-2 text-[13px] font-medium ${msg.ok ? 'text-ok' : 'text-[#e5322f]'}`}>{msg.t}</p>}
+      <PrimaryButton disabled={!ok || busy} onClick={async () => {
+        setBusy(true); setMsg(null)
+        const err = await changeOwnPassword(cur, next)
+        setBusy(false)
+        if (err) setMsg({ ok: false, t: err })
+        else { setMsg({ ok: true, t: 'Parol o‘zgartirildi' }); setCur(''); setNext(''); setNext2('') }
+      }}>{busy ? 'Saqlanmoqda…' : 'Parolni saqlash'}</PrimaryButton>
+      <p className="mt-3 text-[12px] text-muted">Bu Boshliq hisobining paroli. Admin parolini ({ADMIN_EMAIL}) Firebase Console → Authentication bo‘limida almashtirasiz.</p>
+    </Card>
+  )
+}
+
 function BossSettings() {
   const { adminPass, bossPass, setPasswords, resetCatalog, log, clearLog } = useStore()
   const [a, setA] = useState(adminPass)
@@ -515,13 +585,13 @@ function BossSettings() {
   const ok = /^\d{4,8}$/.test(a) && /^\d{4,8}$/.test(b) && a !== b
   return (
     <div className="px-2 pt-3">
-      <Card title={<span className="flex items-center gap-2"><KeyRound size={18} /> Parollar</span>}>
+      {!isDemo ? <OwnPassword /> : <Card title={<span className="flex items-center gap-2"><KeyRound size={18} /> Parollar</span>}>
         <F label="Admin paneli paroli"><input id="bs-admin" type={show ? 'text' : 'password'} inputMode="numeric" value={a} onChange={(e) => setA(e.target.value.replace(/\D/g, '').slice(0, 8))} className={inp} /></F>
         <F label="Boshliq paneli paroli"><input id="bs-boss" type={show ? 'text' : 'password'} inputMode="numeric" value={b} onChange={(e) => setB(e.target.value.replace(/\D/g, '').slice(0, 8))} className={inp} /></F>
         <button onClick={() => setShow(!show)} className="mb-3 flex items-center gap-1.5 text-[13px] font-semibold text-brand-600 dark:text-brand-200">{show ? <EyeOff size={15} /> : <Eye size={15} />} {show ? 'Yashirish' : 'Ko‘rsatish'}</button>
         {!ok && <p className="mb-2 text-[12px] text-[#e5322f]">Parollar 4–8 raqamdan iborat va bir-biridan farqli bo‘lsin</p>}
         <PrimaryButton disabled={!ok || (a === adminPass && b === bossPass)} onClick={() => setPasswords(a, b)}>Parollarni saqlash</PrimaryButton>
-      </Card>
+      </Card>}
 
       <Card title={<span className="flex items-center gap-2"><RotateCcw size={18} /> Katalog</span>}>
         <p className="mb-3 text-[13px] text-muted">Barcha narx, qoldiq va mahsulot o‘zgarishlarini bekor qilib, boshlang‘ich katalogni tiklaydi.</p>

@@ -4,7 +4,7 @@ import { ProductGrid } from '../components/ProductCard'
 import { ProductImage } from '../components/ProductArt'
 import { tintFor } from '../components/ProductCard'
 import { Empty, Mark, PrimaryButton, TopBar } from '../components/ui'
-import { useStore } from '../store'
+import { orderNo, useStore } from '../store'
 import { deliveryDate, som } from '../format'
 
 export function Favorites() {
@@ -98,7 +98,7 @@ export function Orders() {
           {orders.map((o) => (
             <div key={o.id} className="rounded-3xl bg-card p-4">
               <div className="flex items-center justify-between">
-                <div className="font-bold">№ {o.id}</div>
+                <div className="font-bold">№ {orderNo(o.id)}</div>
                 <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-900/50 dark:text-brand-200">{o.status}</span>
               </div>
               <div className="mt-1 text-[13px] text-muted">{new Date(o.date).toLocaleDateString('ru-RU')} · {o.address}</div>
@@ -148,7 +148,7 @@ export function Success() {
     <div className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
       <div className="animate-pop grid size-24 place-items-center rounded-full bg-ok text-white shadow-xl shadow-ok/30"><CircleCheck size={52} /></div>
       <h1 className="mt-6 text-2xl font-extrabold">Buyurtma qabul qilindi!</h1>
-      <p className="mt-2 text-muted">№ {id} · {deliveryDate(1)} kuni yetkazib beramiz. Operator tez orada qo‘ng‘iroq qiladi.</p>
+      <p className="mt-2 text-muted">№ {orderNo(id ?? '')} · {deliveryDate(1)} kuni yetkazib beramiz. Operator tez orada qo‘ng‘iroq qiladi.</p>
       <div className="mt-8 w-full max-w-sm space-y-2">
         <PrimaryButton onClick={() => nav('/orders', { replace: true })}>Buyurtmani kuzatish</PrimaryButton>
         <button onClick={() => nav('/', { replace: true })} className="h-12 w-full rounded-2xl bg-chip font-semibold">Xaridni davom ettirish</button>

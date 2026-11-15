@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import {
   collection, doc, onSnapshot, setDoc, deleteDoc, updateDoc, writeBatch, increment,
-  query, orderBy, limit, where, documentId, addDoc, getDocs, type Unsubscribe,
+  query, orderBy, limit, addDoc, getDocs, type Unsubscribe,
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { seedProducts, type Product } from './data/products'
@@ -88,6 +88,9 @@ const fromDb = (d: Record<string, unknown>, id: string): Product => {
   return { ...(d as unknown as Product), specs, id }
 }
 
+/** Buyurtma raqamini qisqa ko'rinishda chiqarish. */
+export const orderNo = (id: string) => (id.length > 8 ? id.slice(0, 8).toUpperCase() : id)
+
 const isDenied = (e: unknown) => (e as { code?: string })?.code === 'permission-denied'
 
 export const useStore = create<State>()(
@@ -146,7 +149,8 @@ export const useStore = create<State>()(
         setCity: (city) => set({ city }),
 
         placeOrder: async (o) => {
-          const id = String(Math.floor(10_000_000 + Math.random() * 89_999_999))
+          // Serverda taxmin qilib bo'lmaydigan uzun ID ishlatiladi (begona odam boshqa buyurtmani ocha olmasligi uchun)
+          const id = DEMO ? String(Math.floor(10_000_000 + Math.random() * 89_999_999)) : doc(collection(db, 'orders')).id
           const products = get().products
           const items = get().cart.filter((c) => c.checked).flatMap((c) => {
             const p = products.find((x) => x.id === c.id)
@@ -225,12 +229,12 @@ export const useStore = create<State>()(
           if (DEMO) {
             const upd = (l: Order[]) => l.map((o) => (o.id === id ? { ...o, status } : o))
             set({ orders: upd(get().orders), myOrders: upd(get().myOrders) })
-            addLog(who, `Buyurtma №${id} → ${status}`)
+            addLog(who, `Buyurtma №${orderNo(id)} → ${status}`)
             return
           }
           try {
             await updateDoc(doc(db, 'orders', id), { status })
-            addLog(who, `Buyurtma №${id} → ${status}`)
+            addLog(who, `Buyurtma №${orderNo(id)} → ${status}`)
           } catch (e) {
             fail(e)
           }
@@ -333,34 +337,38 @@ export function startSync() {
     },
     (e) => useStore.setState({ sync: isDenied(e) ? 'denied' : 'offline' }),
   )
-  onSnapshot(
-    doc(db, 'settings', 'main'),
-    (d) => {
-      const s = d.data() as { adminPass?: string; bossPass?: string } | undefined
-      useStore.setState({ adminPass: s?.adminPass ?? '2019', bossPass: s?.bossPass ?? '1988' })
-    },
-    console.error,
-  )
   subscribeMyOrders()
 }
 
-let myOrdersUnsub: Unsubscribe | undefined
-/** Mijozning o‘z buyurtmalari (shu qurilmadan berilganlar) holatini kuzatish. */
+let myOrdersUnsubs: Unsubscribe[] = []
+/** Mijozning o'z buyurtmalari (shu qurilmadan berilganlar) holatini kuzatish — har birini ID bo'yicha. */
 export function subscribeMyOrders() {
   if (DEMO) return
-  myOrdersUnsub?.()
+  myOrdersUnsubs.forEach((u) => u())
   const ids = useStore.getState().myOrderIds.slice(0, 30)
-  if (!ids.length) return
-  myOrdersUnsub = onSnapshot(
-    query(collection(db, 'orders'), where(documentId(), 'in', ids)),
-    (snap) => useStore.setState({ myOrders: snap.docs.map((d) => d.data() as Order).sort((a, b) => b.date.localeCompare(a.date)) }),
-    console.error,
+  const found = new Map<string, Order>()
+  const publish = () => useStore.setState({ myOrders: [...found.values()].sort((a, b) => b.date.localeCompare(a.date)) })
+  myOrdersUnsubs = ids.map((id) =>
+    onSnapshot(
+      doc(db, 'orders', id),
+      (d) => { if (d.exists()) found.set(id, d.data() as Order); else found.delete(id); publish() },
+      console.error,
+    ),
   )
 }
 
 /** Admin/Boshliq paneli ochiq turganda: barcha buyurtmalar va jurnal. */
 export function subscribeStaff(): () => void {
   if (DEMO) return () => {}
+  // Baza bo'sh bo'lsa (birinchi ishga tushirish), xodim kirganda boshlang'ich katalog yoziladi
+  getDocs(query(collection(db, 'products'), limit(1)))
+    .then(async (snap) => {
+      if (!snap.empty) return
+      const batch = writeBatch(db)
+      seedProducts.forEach((p) => batch.set(doc(db, 'products', p.id), toDb(p)))
+      await batch.commit()
+    })
+    .catch(console.error)
   const u1 = onSnapshot(
     query(collection(db, 'orders'), orderBy('date', 'desc'), limit(500)),
     (snap) => useStore.setState({ orders: snap.docs.map((d) => d.data() as Order) }),

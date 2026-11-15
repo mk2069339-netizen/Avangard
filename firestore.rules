@@ -1,41 +1,66 @@
 rules_version = '2';
 
-// DIQQAT: bu boshlang'ich qoidalar. Admin va Boshliq panellari hozircha
-// faqat ilova ichidagi parol bilan himoyalangan, shuning uchun bazaga
-// yozish hamma uchun ochiq. Keyingi qadam: Firebase Authentication qo'shib,
-// mahsulot va sozlamalarni faqat admin hisoblari o'zgartira oladigan qilish.
+// Avangard — Firestore xavfsizlik qoidalari.
+// Xodimlar: admin@avangard.app (Admin) va boshliq@avangard.app (Boshliq).
+// Hisoblar Firebase Console → Authentication'da yaratiladi (Email/Password).
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Mahsulotlar: hamma o'qiydi; yozishda asosiy maydonlar tekshiriladi
-    match /products/{id} {
-      allow read: if true;
-      allow create, update: if request.resource.data.title is string
-                            && request.resource.data.price is number
-                            && request.resource.data.price > 0
-                            && request.resource.data.stock is number;
-      allow delete: if true;
+    function signedInWithPassword() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider == 'password';
+    }
+    function isBoss() {
+      return signedInWithPassword() && request.auth.token.email == 'boshliq@avangard.app';
+    }
+    function isStaff() {
+      return isBoss()
+        || (signedInWithPassword() && request.auth.token.email == 'admin@avangard.app');
     }
 
-    // Buyurtmalar: mijoz yaratadi, panel holatini o'zgartiradi
-    match /orders/{id} {
+    // Mahsulotlar: hamma ko'radi, faqat xodimlar o'zgartiradi.
+    // Mijoz buyurtma berganda faqat qoldiq (stock) kamayishi va sotuvlar (orders) oshishiga ruxsat.
+    match /products/{id} {
       allow read: if true;
-      allow create: if request.resource.data.total is number
-                    && request.resource.data.items is list
-                    && request.resource.data.status == 'Yangi';
-      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow create, delete: if isStaff();
+      allow update: if isStaff() || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'orders'])
+        && request.resource.data.stock is number
+        && request.resource.data.stock >= 0
+        && request.resource.data.stock < resource.data.stock
+        && request.resource.data.orders > resource.data.orders
+      );
+    }
+
+    // Buyurtmalar: mijoz yaratadi va o'zinikini ID orqali ko'radi (ID uzun va tasodifiy).
+    // Ro'yxatni ko'rish va holatni o'zgartirish — faqat xodimlar.
+    match /orders/{id} {
+      allow get: if true;
+      allow list: if isStaff();
+      allow create: if request.resource.data.status == 'Yangi'
+        && request.resource.data.id == id
+        && request.resource.data.total is number
+        && request.resource.data.items is list
+        && request.resource.data.items.size() > 0
+        && request.resource.data.items.size() <= 50
+        && request.resource.data.customer is string
+        && request.resource.data.phone is string;
+      allow update: if isStaff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
       allow delete: if false;
     }
 
-    // Parollar va sozlamalar
-    match /settings/{id} {
-      allow read, write: if true;
+    // Xodimlar harakatlari jurnali.
+    match /logs/{id} {
+      allow read: if isStaff();
+      allow create: if isStaff() && request.resource.data.who in ['admin', 'boshliq'];
+      allow delete: if isBoss();
+      allow update: if false;
     }
 
-    // Xodimlar harakatlari jurnali
-    match /logs/{id} {
-      allow read, create, delete: if true;
-      allow update: if false;
+    // Eski sozlamalar (PIN parollar) endi ishlatilmaydi.
+    match /settings/{id} {
+      allow read, write: if false;
     }
   }
 }
