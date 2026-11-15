@@ -10,10 +10,10 @@ import { useTapUnlock } from './Admin'
 import { som } from '../format'
 
 const banners = [
-  { title: 'Muzlatgichlar −25%', sub: 'No Frost va inverter modellar. Ertaga yetkazamiz', art: 'fridge', bg: 'linear-gradient(135deg,#0c3038 0%,#1f6977 55%,#2fb3c6 100%)', to: '/c/fridge' },
-  { title: 'Black Friday −45%', sub: 'Televizorlar va smartfonlarga katta chegirmalar', art: 'tv', bg: 'linear-gradient(135deg,#1a0b0b 0%,#e5322f 100%)', to: '/c/tv' },
-  { title: 'Qishga tayyormisiz?', sub: 'Isitgichlar va inverter konditsionerlar', art: 'ac', bg: 'linear-gradient(135deg,#ff8a00 0%,#e5322f 100%)', to: '/c/ac' },
-  { title: 'O‘rnatish bepul', sub: 'Kir yuvish va idish yuvish mashinalariga', art: 'washer', bg: 'linear-gradient(135deg,#175663 0%,#00b86b 100%)', to: '/c/washer' },
+  { title: 'AVANGARD kir yuvish mashinasi', sub: '8 kg, bug‘ bilan yuvish, BLDC inverter. Motoriga 10 yil kafolat', pid: 'av-80hxlb', bg: 'linear-gradient(135deg,#0c3038 0%,#1f6977 55%,#2fb3c6 100%)' },
+  { title: 'Ziffler inverter konditsioner', sub: '35 m² gacha, TEN bilan isitish. 3 yil kafolat', pid: 'ziffler-12inv', bg: 'linear-gradient(135deg,#071a1d 0%,#0f766e 100%)' },
+  { title: 'ASUS Vivobook', sub: 'Core i5, 8/512 GB SSD, 15.6" IPS ekran', pid: 'asus-x1504va', bg: 'linear-gradient(135deg,#0b1020 0%,#1f6977 100%)' },
+  { title: 'Ziffler Nobile kofe mashina', sub: '10 ta avtomatik rejim, sensorli boshqaruv', pid: 'ziffler-nobile', bg: 'linear-gradient(135deg,#1a0b0b 0%,#e5322f 100%)' },
 ] as const
 
 const stories = [
@@ -94,10 +94,10 @@ export default function Home() {
       {/* Perks */}
       <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto px-4">
         {[
-          { i: Truck, t: '1 kunda yetkazish', c: 'text-ok' },
-          { i: Percent, t: 'Har kuni chegirmalar', c: 'text-accent-500' },
-          { i: ShieldCheck, t: 'Rasmiy kafolat', c: 'text-brand-600' },
-          { i: Wrench, t: 'Bepul o‘rnatish', c: 'text-[#e5322f]' },
+          { i: ShieldCheck, t: '3 yilgacha kafolat', c: 'text-brand-600' },
+          { i: Truck, t: 'Yetkazib berish', c: 'text-ok' },
+          { i: Percent, t: 'Narxlar dollarda', c: 'text-accent-500' },
+          { i: Wrench, t: 'Ishonchli brendlar', c: 'text-[#e5322f]' },
         ].map(({ i: I, t, c }) => (
           <div key={t} className="flex shrink-0 items-center gap-2 rounded-2xl bg-card px-3 py-2.5 text-[13px] font-semibold">
             <I size={18} className={c} /> {t}
@@ -108,10 +108,10 @@ export default function Home() {
       {/* Categories */}
       <Section title="Kategoriyalar" action={<Link to="/catalog" className="flex items-center text-sm font-semibold text-brand-600 dark:text-brand-200">Barchasi <ChevronRight size={16} /></Link>}>
         <div className="no-scrollbar grid auto-cols-[88px] grid-flow-col grid-rows-2 gap-2 overflow-x-auto px-4">
-          {categories.map((c) => (
+          {categories.filter((c) => products.some((p) => p.cat === c.id)).map((c) => (
             <Link key={c.id} to={`/c/${c.id}`} className="flex flex-col items-center gap-1.5 active:scale-95 transition">
-              <span className="grid size-[76px] place-items-center rounded-[22px]" style={{ background: c.tint }}>
-                <ProductArt kind={c.art} className="size-14" />
+              <span className="grid size-[76px] place-items-center overflow-hidden rounded-[22px]" style={{ background: c.tint }}>
+                <CatThumb cat={c} products={products} className="size-full" />
               </span>
               <span className="line-clamp-2 text-center text-[11.5px] leading-tight font-medium">{c.name}</span>
             </Link>
@@ -119,8 +119,8 @@ export default function Home() {
         </div>
       </Section>
 
-      {/* Flash sale */}
-      <section className="mx-2 mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-[#e5322f] to-[#ff8a00] pb-3">
+      {/* Flash sale — faqat chegirmali mahsulot bo'lsa */}
+      {deals.length > 0 && <section className="mx-2 mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-[#e5322f] to-[#ff8a00] pb-3">
         <div className="flex items-center justify-between px-4 pt-4 pb-3 text-white">
           <div>
             <div className="flex items-center gap-1.5 text-[19px] font-extrabold"><Flame size={22} className="fill-white" /> Kun chegirmalari</div>
@@ -131,7 +131,7 @@ export default function Home() {
         <div className="no-scrollbar snap-x-m flex gap-2 overflow-x-auto px-2">
           {deals.map((p) => <ProductCard key={p.id} p={p} wide />)}
         </div>
-      </section>
+      </section>}
 
       <Section title={<span className="flex items-center gap-1.5">Eng ko‘p sotilgan <Sparkles size={18} className="text-accent-500" /></span>}>
         <div className="no-scrollbar snap-x-m flex gap-2 overflow-x-auto px-2">
@@ -168,6 +168,7 @@ export default function Home() {
 }
 
 function BannerCarousel() {
+  const products = useStore((s) => s.products)
   const ref = useRef<HTMLDivElement>(null)
   const [idx, setIdx] = useState(0)
   useEffect(() => {
@@ -183,7 +184,7 @@ function BannerCarousel() {
     <div className="relative mt-3">
       <div ref={ref} onScroll={(e) => setIdx(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))} className="no-scrollbar snap-x-m flex overflow-x-auto">
         {banners.map((b) => (
-          <Link key={b.title} to={b.to} className="snap-start-a w-full shrink-0 px-3">
+          <Link key={b.title} to={`/p/${b.pid}`} className="snap-start-a w-full shrink-0 px-3">
             <div className="relative flex h-[168px] overflow-hidden rounded-3xl p-5 text-white" style={{ background: b.bg }}>
               <div className="shimmer absolute inset-0 opacity-30" />
               <div className="relative z-10 flex max-w-[62%] flex-col">
@@ -191,7 +192,7 @@ function BannerCarousel() {
                 <p className="mt-1.5 text-[13px] leading-snug opacity-90">{b.sub}</p>
                 <span className="mt-auto w-fit rounded-full bg-white px-3.5 py-1.5 text-[12.5px] font-bold text-black">Xarid qilish</span>
               </div>
-              <ProductArt kind={b.art} className="absolute -right-4 -bottom-3 size-[170px] drop-shadow-2xl" />
+              {(() => { const bp = products.find((x) => x.id === b.pid); return bp?.image ? <img src={bp.image} alt="" className="absolute top-3 right-3 bottom-3 w-[38%] rounded-2xl object-cover shadow-2xl" /> : null })()}
             </div>
           </Link>
         ))}
@@ -203,4 +204,11 @@ function BannerCarousel() {
       </div>
     </div>
   )
+}
+
+/** Kategoriya belgisi: shu kategoriyadagi birinchi mahsulot surati, bo'lmasa illyustratsiya. */
+export function CatThumb({ cat, products, className = '' }: { cat: { id: string; art: import('../data/products').ArtKind }; products: import('../data/products').Product[]; className?: string }) {
+  const withImg = products.find((p) => p.cat === cat.id && p.image)
+  if (withImg?.image) return <img src={withImg.image} alt="" loading="lazy" className={`${className} object-cover`} />
+  return <ProductArt kind={cat.art} className="size-14" />
 }

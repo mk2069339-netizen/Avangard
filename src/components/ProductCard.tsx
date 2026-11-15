@@ -29,9 +29,9 @@ export default function ProductCard({ p, wide = false }: { p: Product; wide?: bo
 
   return (
     <Link to={`/p/${p.id}`} className={`group animate-rise flex flex-col overflow-hidden rounded-2xl bg-card ${wide ? 'w-[46vw] max-w-[200px] shrink-0 snap-start-a' : ''}`}>
-      <div className="relative aspect-[3/4] overflow-hidden rounded-2xl" style={{ background: tintFor(p.cat) }}>
+      <div className={`relative overflow-hidden rounded-2xl ${p.image ? 'aspect-square' : 'aspect-[3/4]'}`} style={{ background: tintFor(p.cat) }}>
         <div className="absolute inset-0 dark:bg-black/25" />
-        <ProductImage p={p} className="absolute inset-0 m-auto h-[82%] w-[82%] transition duration-500 group-active:scale-95" />
+        <ProductImage p={p} className={`absolute inset-0 m-auto transition duration-500 group-active:scale-95 ${p.image ? 'h-full w-full rounded-none' : 'h-[82%] w-[82%]'}`} />
         <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
           {d > 0 && <span className="rounded-md bg-[#e5322f] px-1.5 py-0.5 text-[11px] font-bold text-white">−{d}%</span>}
           {p.badges?.slice(0, 1).filter((b) => b !== 'sale').map((b) => (
@@ -52,11 +52,14 @@ export default function ProductCard({ p, wide = false }: { p: Product; wide?: bo
         </div>
         {p.oldPrice && <span className="-mt-1 mb-1 text-[12px] text-muted line-through">{som(p.oldPrice)}</span>}
         <h3 className="line-clamp-2 text-[13px] leading-[1.3] text-ink/90">{p.title}</h3>
-        <div className="mt-1 flex items-center gap-1 text-[12px] text-muted">
-          <Star size={12} className="fill-accent-400 text-accent-400" />
-          <span className="font-medium text-ink/80">{p.rating}</span>
-          <span>({p.reviews.toLocaleString('ru-RU')} sharh)</span>
-        </div>
+        {p.reviews > 0 && (
+          <div className="mt-1 flex items-center gap-1 text-[12px] text-muted">
+            <Star size={12} className="fill-accent-400 text-accent-400" />
+            <span className="font-medium text-ink/80">{p.rating}</span>
+            <span>({p.reviews.toLocaleString('ru-RU')} sharh)</span>
+          </div>
+        )}
+        {p.stock <= 0 && <div className="mt-1 text-[12px] font-semibold text-[#e5322f]">Tugagan</div>}
         <div className="mt-auto pt-2">
           <button
             onClick={(e) => { e.preventDefault(); addToCart(p.id) }}

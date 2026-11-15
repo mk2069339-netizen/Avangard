@@ -5,7 +5,7 @@ import { cartLines, cartTotals, useStore } from '../store'
 import { PrimaryButton, TopBar } from '../components/ui'
 import { ProductImage } from '../components/ProductArt'
 import { tintFor } from '../components/ProductCard'
-import { deliveryDate, som } from '../format'
+import { som } from '../format'
 
 export default function Checkout() {
   const nav = useNavigate()
@@ -55,10 +55,10 @@ export default function Checkout() {
         ) : (
           <div className="mt-3 rounded-2xl border border-line p-3 text-[13px]">
             <div className="font-semibold">Avangard — {city} markaziy punkt</div>
-            <div className="text-muted">Har kuni 09:00–21:00 · 7 kun saqlanadi</div>
+            <div className="text-muted">Operator manzil va vaqtni aytadi</div>
           </div>
         )}
-        <div className="mt-3 flex items-center gap-2 text-[13px] text-ok"><CircleCheck size={16} /> {deliveryDate(1)} kuni, bepul</div>
+        <div className="mt-3 flex items-center gap-2 text-[13px] text-ok"><CircleCheck size={16} /> Buyurtmadan keyin operator qo‘ng‘iroq qiladi</div>
       </Card>
 
       <Card title="Qabul qiluvchi">
@@ -68,7 +68,7 @@ export default function Checkout() {
 
       <Card title="To‘lov usuli">
         {([
-          ['card', 'Karta orqali onlayn', 'Uzcard, Humo, Visa', CreditCard],
+          ['card', 'Karta orqali', 'Qabul qilganda terminal orqali', CreditCard],
           ['cash', 'Qabul qilganda', 'Naqd yoki terminal', Banknote],
         ] as const).map(([k, l, s, I]) => (
           <button key={k} onClick={() => setPay(k)} className={`mb-2 flex w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition ${pay === k ? 'border-brand-600 bg-brand-50/60 dark:bg-brand-900/30' : 'border-line'}`}>

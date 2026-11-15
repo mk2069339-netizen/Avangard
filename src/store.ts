@@ -288,7 +288,7 @@ export const useStore = create<State>()(
     },
     {
       name: 'avangard-store',
-      version: 3,
+      version: 4,
       migrate: (old) => {
         const o = (old ?? {}) as Partial<State>
         return { cart: o.cart ?? [], favs: o.favs ?? [], dark: o.dark ?? false, recent: o.recent ?? [], city: o.city ?? 'Toshkent' } as unknown as State

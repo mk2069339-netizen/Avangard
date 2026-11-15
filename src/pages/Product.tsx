@@ -1,12 +1,12 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { ChevronLeft, Heart, Share2, Truck, ShieldCheck, RotateCcw, Store, ChevronRight, BadgeCheck, Minus, Plus, Star, MessageCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { discount, sampleReviews } from '../data/products'
+import { discount } from '../data/products'
 import ProductArt, { ProductImage } from '../components/ProductArt'
 import ProductCard, { tintFor } from '../components/ProductCard'
 import { Section, Stars } from '../components/ui'
 import { useStore } from '../store'
-import { deliveryDate, som } from '../format'
+import { som } from '../format'
 
 
 export default function Product() {
@@ -71,8 +71,9 @@ export default function Product() {
         {p.oldPrice && <div className="mt-1 text-sm text-muted line-through">{som(p.oldPrice)}</div>}
         <h1 className="mt-3 text-[17px] leading-snug font-semibold">{p.title}</h1>
         <div className="mt-2 flex items-center gap-3 text-[13px]">
-          <span className="flex items-center gap-1"><Star size={15} className="fill-accent-400 text-accent-400" /><b>{p.rating}</b><span className="text-muted">· {p.reviews.toLocaleString('ru-RU')} sharh</span></span>
-          <span className="text-muted">{p.orders.toLocaleString('ru-RU')}+ buyurtma</span>
+          {p.reviews > 0 && <span className="flex items-center gap-1"><Star size={15} className="fill-accent-400 text-accent-400" /><b>{p.rating}</b><span className="text-muted">· {p.reviews.toLocaleString('ru-RU')} sharh</span></span>}
+          {p.orders > 0 && <span className="text-muted">{p.orders.toLocaleString('ru-RU')} ta buyurtma</span>}
+          <span className={p.stock > 0 ? 'text-ok' : 'font-semibold text-[#e5322f]'}>{p.stock > 0 ? 'Sotuvda bor' : 'Tugagan'}</span>
         </div>
 
         {p.colors.length > 1 && !p.image && (
@@ -91,9 +92,8 @@ export default function Product() {
 
       {/* Delivery */}
       <div className="mx-2 mt-2 divide-y divide-[var(--line)] rounded-3xl bg-card px-4">
-        <Row icon={<Truck className="text-ok" size={20} />} title={`Yetkazib berish ${deliveryDate(1)}, bepul`} sub="Kuryer orqali yoki 120+ topshirish punktidan" />
-        <Row icon={<ShieldCheck className="text-brand-600" size={20} />} title="Rasmiy kafolat 1–3 yil" sub="Servis markazlarida bepul ta‘mirlash" />
-        <Row icon={<RotateCcw className="text-accent-500" size={20} />} title="10 kun ichida qaytarish" sub="Sababini so‘ramaymiz" />
+        <Row icon={<Truck className="text-ok" size={20} />} title="Yetkazib berish" sub="Vaqti va narxi buyurtmadan keyin operator bilan kelishiladi" />
+        <Row icon={<ShieldCheck className="text-brand-600" size={20} />} title="Kafolat" sub={p.specs.find(([k]) => k === 'Kafolat')?.[1] ?? 'Muddatini operatordan so‘rang'} />
         <Row icon={<Store className="text-[#e5322f]" size={20} />} title={<span className="flex items-center gap-1">Avangard rasmiy do‘koni <BadgeCheck size={16} className="text-brand-600" /></span>} sub={`Omborda ${p.stock} dona mavjud`} chevron />
       </div>
 
@@ -119,41 +119,10 @@ export default function Product() {
       {/* Reviews */}
       <div className="mx-2 mt-2 rounded-3xl bg-card p-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-[17px] font-bold">Sharhlar <span className="text-muted">{p.reviews.toLocaleString('ru-RU')}</span></h2>
+          <h2 className="text-[17px] font-bold">Sharhlar</h2>
           <MessageCircle size={20} className="text-muted" />
         </div>
-        <div className="mt-3 flex items-center gap-4">
-          <div className="text-center">
-            <div className="text-4xl font-extrabold">{p.rating}</div>
-            <Stars value={p.rating} size={14} />
-          </div>
-          <div className="flex-1 space-y-1">
-            {[5, 4, 3, 2, 1].map((s) => {
-              const w = s === 5 ? 82 : s === 4 ? 12 : s === 3 ? 4 : 1
-              return (
-                <div key={s} className="flex items-center gap-2 text-xs text-muted">
-                  <span className="w-2">{s}</span>
-                  <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-chip"><span className="block h-full rounded-full bg-accent-400" style={{ width: `${w}%` }} /></span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-        <div className="no-scrollbar -mx-4 mt-4 flex gap-2 overflow-x-auto px-4">
-          {sampleReviews.map((r) => (
-            <div key={r.name} className="w-[260px] shrink-0 rounded-2xl bg-chip p-3">
-              <div className="flex items-center gap-2">
-                <span className="grid size-8 place-items-center rounded-full bg-brand-600 text-sm font-bold text-white">{r.name[0]}</span>
-                <div className="flex-1">
-                  <div className="text-sm font-semibold">{r.name}</div>
-                  <div className="text-[11px] text-muted">{r.date}</div>
-                </div>
-                <Stars value={r.rating} size={11} />
-              </div>
-              <p className="mt-2 line-clamp-3 text-[13px] leading-snug">{r.text}</p>
-            </div>
-          ))}
-        </div>
+        <p className="mt-2 text-[14px] text-muted">Hali sharhlar yo‘q. Mahsulotni xarid qilganlar birinchi bo‘lib fikr qoldirishi mumkin.</p>
       </div>
 
       <Section title="O‘xshash mahsulotlar">
@@ -167,7 +136,7 @@ export default function Product() {
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
             <div className="text-[15px] leading-tight font-extrabold whitespace-nowrap">{som(p.price)}</div>
-            <div className="truncate text-xs text-ok">Ertaga bepul yetkazamiz</div>
+            <div className={`truncate text-xs ${p.stock > 0 ? 'text-ok' : 'text-[#e5322f]'}`}>{p.stock > 0 ? 'Sotuvda bor' : 'Tugagan'}</div>
           </div>
           {line ? (
             <div className="flex h-12 items-center gap-1 rounded-2xl bg-chip p-1">

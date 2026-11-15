@@ -348,7 +348,7 @@ function ProductEditor({ initial, onClose, onSave, who }: { initial: Product; on
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </F>
-          <F label="Narx, so‘m"><input id="pe-price" inputMode="numeric" value={p.price || ''} onChange={(e) => up({ price: +e.target.value.replace(/\D/g, '') })} placeholder="0" className={inp} /></F>
+          <F label="Narx, $"><input id="pe-price" inputMode="numeric" value={p.price || ''} onChange={(e) => up({ price: +e.target.value.replace(/\D/g, '') })} placeholder="0" className={inp} /></F>
           <F label="Eski narx (chegirma)"><input id="pe-old" inputMode="numeric" value={p.oldPrice || ''} onChange={(e) => up({ oldPrice: +e.target.value.replace(/\D/g, '') || undefined })} placeholder="ixtiyoriy" className={inp} /></F>
           <F label="Omborda, dona"><input id="pe-stock" inputMode="numeric" value={p.stock} onChange={(e) => up({ stock: +e.target.value.replace(/\D/g, '') })} className={inp} /></F>
           <F label="Chegirma">

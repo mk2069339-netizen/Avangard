@@ -5,7 +5,7 @@ import { ProductImage } from '../components/ProductArt'
 import { tintFor } from '../components/ProductCard'
 import { Empty, PrimaryButton, Section, TopBar } from '../components/ui'
 import ProductCard from '../components/ProductCard'
-import { deliveryDate, som } from '../format'
+import { som } from '../format'
 
 export default function Cart() {
   const nav = useNavigate()
@@ -40,7 +40,7 @@ export default function Cart() {
       <TopBar title={<>Savat <span className="text-muted font-medium">· {lines.reduce((a, l) => a + l.qty, 0)}</span></>} back={false} />
 
       <div className="mx-2 mt-2 flex items-center gap-2 rounded-2xl bg-ok/10 px-4 py-3 text-[13px] font-medium text-ok">
-        <Truck size={18} /> Yetkazib berish bepul · {deliveryDate(1)} kuni
+        <Truck size={18} /> Yetkazib berish vaqti operator bilan kelishiladi
       </div>
 
       <div className="mx-2 mt-2 flex items-center justify-between rounded-2xl bg-card px-4 py-3">
@@ -83,7 +83,7 @@ export default function Cart() {
         <h3 className="mb-2 text-[17px] font-bold">Buyurtmangiz</h3>
         <Line k={`Mahsulotlar (${t.count})`} v={som(t.old)} />
         {t.saved > 0 && <Line k="Chegirma" v={<span className="text-[#e5322f]">−{som(t.saved)}</span>} />}
-        <Line k="Yetkazib berish" v={<span className="text-ok">Bepul</span>} />
+        <Line k="Yetkazib berish" v={<span className="text-muted">Kelishiladi</span>} />
         <div className="mt-2 flex items-center justify-between border-t border-line pt-3">
           <span className="font-bold">Jami</span>
           <span className="text-[19px] font-extrabold">{som(t.sum)}</span>

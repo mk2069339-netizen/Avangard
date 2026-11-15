@@ -1,4 +1,4 @@
-export const som = (n: number) => `${Math.round(n).toLocaleString('ru-RU').replace(/,/g, ' ')} so‘m`
+export const som = (n: number) => `${Math.round(n).toLocaleString('ru-RU').replace(/,/g, ' ')} $`
 export const plural = (n: number) => n.toLocaleString('ru-RU')
 export const deliveryDate = (days = 1) => {
   const d = new Date(Date.now() + days * 864e5)

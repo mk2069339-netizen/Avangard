@@ -2,7 +2,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpDown, ChevronRight, Clock, Search as SearchIcon, SlidersHorizontal, X, Mic, Check } from 'lucide-react'
 import { brandsOf, categories, discount, type Product } from '../data/products'
-import ProductArt from '../components/ProductArt'
+import { CatThumb } from './Home'
 import { ProductGrid } from '../components/ProductCard'
 import { Empty, PrimaryButton, TopBar } from '../components/ui'
 import { useStore } from '../store'
@@ -20,7 +20,7 @@ export function Catalog() {
         </button>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 px-2 sm:grid-cols-3">
-        {categories.map((c, i) => {
+        {categories.filter((c) => products.some((p) => p.cat === c.id)).map((c, i) => {
           const n = products.filter((p) => p.cat === c.id).length
           return (
             <Link key={c.id} to={`/c/${c.id}`} className="animate-rise relative flex h-[120px] overflow-hidden rounded-3xl p-3 transition active:scale-[.97]" style={{ background: c.tint, animationDelay: `${i * 30}ms` }}>
@@ -28,7 +28,7 @@ export function Catalog() {
                 {c.name}
                 <div className="mt-1 text-[11.5px] font-medium text-black/50">{n} mahsulot</div>
               </div>
-              <ProductArt kind={c.art} className="absolute -right-3 -bottom-3 size-[96px]" />
+              <span className="absolute -right-2 -bottom-2 size-[84px] overflow-hidden rounded-2xl shadow-lg"><CatThumb cat={c} products={products} className="size-full" /></span>
             </Link>
           )
         })}
@@ -214,7 +214,7 @@ export function SearchPage() {
           )}
           <h3 className="mt-5 font-bold">Ommabop</h3>
           <div className="mt-3 flex flex-wrap gap-2">
-            {['Robot changyutgich', 'OLED', 'Inverter', 'Samsung', 'Artel', 'Choynak', 'Kir yuvish', 'Redmi'].map((t) => (
+            {['Avangard', 'Ziffler', 'Inverter', 'Changyutgich', 'Kir yuvish', 'Kuler', 'Printer', 'Noutbuk'].map((t) => (
               <button key={t} onClick={() => go(t)} className="rounded-full bg-card px-3.5 py-2 text-[13px] font-medium">{t}</button>
             ))}
           </div>

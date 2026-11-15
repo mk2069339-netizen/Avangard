@@ -48,8 +48,8 @@ export function Profile() {
       </div>
       <div className="-mt-10 mx-2 grid grid-cols-3 gap-2">
         {[
-          { i: Gift, t: 'Bonuslar', v: '25 000' },
-          { i: Percent, t: 'Promokodlar', v: '2 ta' },
+          { i: Gift, t: 'Saralangan', v: String(favs.length) },
+          { i: Percent, t: 'Buyurtmalar', v: String(orders.length) },
           { i: ShieldCheck, t: 'Kafolatlar', v: String(orders.length) },
         ].map(({ i: I, t, v }) => (
           <div key={t} className="rounded-2xl bg-card p-3 shadow-sm">
@@ -148,7 +148,7 @@ export function Success() {
     <div className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
       <div className="animate-pop grid size-24 place-items-center rounded-full bg-ok text-white shadow-xl shadow-ok/30"><CircleCheck size={52} /></div>
       <h1 className="mt-6 text-2xl font-extrabold">Buyurtma qabul qilindi!</h1>
-      <p className="mt-2 text-muted">№ {orderNo(id ?? '')} · {deliveryDate(1)} kuni yetkazib beramiz. Operator tez orada qo‘ng‘iroq qiladi.</p>
+      <p className="mt-2 text-muted">№ {orderNo(id ?? '')} · Operator tez orada qo‘ng‘iroq qilib, yetkazib berish vaqtini kelishib oladi.</p>
       <div className="mt-8 w-full max-w-sm space-y-2">
         <PrimaryButton onClick={() => nav('/orders', { replace: true })}>Buyurtmani kuzatish</PrimaryButton>
         <button onClick={() => nav('/', { replace: true })} className="h-12 w-full rounded-2xl bg-chip font-semibold">Xaridni davom ettirish</button>
