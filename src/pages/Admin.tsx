@@ -348,8 +348,8 @@ function ProductEditor({ initial, onClose, onSave, who }: { initial: Product; on
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </F>
-          <F label="Narx, $"><input id="pe-price" inputMode="numeric" value={p.price || ''} onChange={(e) => up({ price: +e.target.value.replace(/\D/g, '') })} placeholder="0" className={inp} /></F>
-          <F label="Eski narx (chegirma)"><input id="pe-old" inputMode="numeric" value={p.oldPrice || ''} onChange={(e) => up({ oldPrice: +e.target.value.replace(/\D/g, '') || undefined })} placeholder="ixtiyoriy" className={inp} /></F>
+          <F label="Narx, $"><input id="pe-price" type="number" step="0.01" min="0" inputMode="decimal" value={p.price || ''} onChange={(e) => up({ price: Math.max(0, +e.target.value || 0) })} placeholder="0" className={inp} /></F>
+          <F label="Eski narx (chegirma)"><input id="pe-old" type="number" step="0.01" min="0" inputMode="decimal" value={p.oldPrice || ''} onChange={(e) => up({ oldPrice: +e.target.value || undefined })} placeholder="ixtiyoriy" className={inp} /></F>
           <F label="Omborda, dona"><input id="pe-stock" inputMode="numeric" value={p.stock} onChange={(e) => up({ stock: +e.target.value.replace(/\D/g, '') })} className={inp} /></F>
           <F label="Chegirma">
             <div className={`${inp} flex items-center font-semibold ${discount(p) > 0 ? 'text-[#e5322f]' : 'text-muted'}`}>{discount(p) > 0 ? `−${discount(p)}%` : 'yo‘q'}</div>

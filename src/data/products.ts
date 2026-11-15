@@ -45,10 +45,15 @@ export const categories: Category[] = [
   { id: 'ac', name: 'Konditsionerlar', art: 'ac', tint: '#E5FBF6' },
   { id: 'vacuum', name: 'Changyutgichlar', art: 'vacuum', tint: '#FFF1E6' },
   { id: 'kitchen', name: 'Oshxona texnikasi', art: 'microwave', tint: '#FFEDEF' },
-  { id: 'stove', name: 'Plita va duxovkalar', art: 'stove', tint: '#FFF6DB' },
+  { id: 'stove', name: 'Plita, duxovka, vityajka', art: 'stove', tint: '#FFF6DB' },
+  { id: 'cookware', name: 'Qozon va choynaklar', art: 'kettle', tint: '#FFF4E8' },
+  { id: 'dish', name: 'Idish yuvish mashinalari', art: 'dishwasher', tint: '#E9F8FF' },
+  { id: 'iron', name: 'Dazmollar', art: 'iron', tint: '#EEF0FF' },
+  { id: 'climate', name: 'Isitish va iqlim', art: 'heater', tint: '#FFEDE3' },
   { id: 'small', name: 'Kulerlar', art: 'kettle', tint: '#EAF7EA' },
   { id: 'laptop', name: 'Noutbuklar', art: 'laptop', tint: '#E8F1FF' },
   { id: 'office', name: 'Ofis texnikasi', art: 'laptop', tint: '#ECEEF5' },
+  { id: 'furniture', name: 'Ofis kreslolari', art: 'robot', tint: '#F1EAFF' },
   { id: 'sport', name: 'Sport jihozlari', art: 'robot', tint: '#FFEDE3' },
   { id: 'home', name: 'Uy-ro‘zg‘or', art: 'iron', tint: '#E9F8FF' },
 ]
@@ -118,6 +123,13 @@ export const seedProducts: Product[] = [
     specs: [['Model', 'WT-P100 GX2'], ['So‘rish chuqurligi', '8 m'], ['Ko‘tarish balandligi', '12 m'], ['Ishlab chiqarilgan', 'Tailand'], ['Kafolat', '1 yil']],
     desc: 'Tailandda ishlab chiqarilgan. 1 yil kafolat.' }),
 ]
+
+import extra from './catalog-extra.json'
+
+const artByCat: Record<string, ArtKind> = Object.fromEntries(categories.map((c) => [c.id, c.art]))
+/** Drive'dan qo'shilgan mahsulotlar (do'kon skrinshotlaridan). */
+seedProducts.push(...(extra as { id: string; title: string; brand: string; cat: string; price: number; image: string; desc: string; hidden: boolean }[])
+  .map((x) => p({ ...x, art: artByCat[x.cat] ?? 'fridge' })))
 
 export const brandsOf = (list: Product[]) => Array.from(new Set(list.map((x) => x.brand))).sort()
 
