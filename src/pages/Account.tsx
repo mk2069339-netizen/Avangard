@@ -1,4 +1,5 @@
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import PayCard from '../components/PayCard'
 import { Heart, Package, Moon, Sun, MapPin, Globe, Headphones, Info, ChevronRight, Gift, Bell, CircleCheck, ShieldCheck, Percent } from 'lucide-react'
 import { ProductGrid } from '../components/ProductCard'
 import { ProductImage } from '../components/ProductArt'
@@ -144,11 +145,17 @@ function Steps({ status }: { status: string }) {
 export function Success() {
   const { id } = useParams()
   const nav = useNavigate()
+  const st = useLocation().state as { transfer?: boolean; total?: number } | null
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
+    <div className="flex min-h-dvh flex-col items-center justify-center px-6 py-10 text-center">
       <div className="animate-pop grid size-24 place-items-center rounded-full bg-ok text-white shadow-xl shadow-ok/30"><CircleCheck size={52} /></div>
       <h1 className="mt-6 text-2xl font-extrabold">Buyurtma qabul qilindi!</h1>
       <p className="mt-2 text-muted">№ {orderNo(id ?? '')} · Operator tez orada qo‘ng‘iroq qilib, yetkazib berish vaqtini kelishib oladi.</p>
+      {st?.transfer && (
+        <div className="mt-6 w-full max-w-sm">
+          <PayCard note={<>{st.total ? <>Summa: <b>{som(st.total)}</b> (so‘mdagi miqdorini operator tasdiqlaydi). </> : null}O‘tkazmaning izohiga buyurtma raqamini yozing: <b>№ {orderNo(id ?? '')}</b></>} />
+        </div>
+      )}
       <div className="mt-8 w-full max-w-sm space-y-2">
         <PrimaryButton onClick={() => nav('/orders', { replace: true })}>Buyurtmani kuzatish</PrimaryButton>
         <button onClick={() => nav('/', { replace: true })} className="h-12 w-full rounded-2xl bg-chip font-semibold">Xaridni davom ettirish</button>

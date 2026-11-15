@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import { CreditCard, MapPin, Store, Truck, Banknote, CircleCheck } from 'lucide-react'
+import { CreditCard, MapPin, Store, Truck, Banknote, CircleCheck, Smartphone } from 'lucide-react'
+import PayCard from '../components/PayCard'
 import { cartLines, cartTotals, useStore } from '../store'
 import { PrimaryButton, TopBar } from '../components/ui'
 import { ProductImage } from '../components/ProductArt'
@@ -16,7 +17,7 @@ export default function Checkout() {
   const t = cartTotals(cart, products)
   const lines = cartLines(cart, products).filter((l) => l.checked)
   const [mode, setMode] = useState<'courier' | 'pickup'>('courier')
-  const [pay, setPay] = useState<'card' | 'cash'>('card')
+  const [pay, setPay] = useState<'transfer' | 'card' | 'cash'>('transfer')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('+998 ')
   const [addr, setAddr] = useState('')
@@ -27,13 +28,13 @@ export default function Checkout() {
     setSending(true)
     const id = await placeOrder({
       total: t.sum,
-      payment: pay === 'card' ? 'Karta orqali' : 'Qabul qilganda',
+      payment: pay === 'transfer' ? 'Kartaga o‘tkazma (Click/Payme)' : pay === 'card' ? 'Karta orqali (terminal)' : 'Qabul qilganda naqd',
       customer: name.trim(),
       phone: phone.trim(),
       address: mode === 'pickup' ? `${city}, Avangard topshirish punkti` : `${city}, ${addr}`,
     })
     setSending(false)
-    if (id) nav(`/success/${id}`, { replace: true })
+    if (id) nav(`/success/${id}`, { replace: true, state: { transfer: pay === 'transfer', total: t.sum } })
   }
 
   if (!lines.length) return <div className="p-10 text-center">Savat bo‘sh</div>
@@ -68,6 +69,7 @@ export default function Checkout() {
 
       <Card title="To‘lov usuli">
         {([
+          ['transfer', 'Click / Payme orqali', 'Kartaga o‘tkazma', Smartphone],
           ['card', 'Karta orqali', 'Qabul qilganda terminal orqali', CreditCard],
           ['cash', 'Qabul qilganda', 'Naqd yoki terminal', Banknote],
         ] as const).map(([k, l, s, I]) => (
@@ -80,6 +82,7 @@ export default function Checkout() {
             <span className={`size-5 rounded-full border-2 ${pay === k ? 'border-[6px] border-brand-600' : 'border-gray-300'}`} />
           </button>
         ))}
+        {pay === 'transfer' && <PayCard note={<>Buyurtma bergach, shu kartaga Click yoki Payme orqali <b>{som(t.sum)}</b> ga teng summani so‘mda o‘tkazing. Aniq summani operator tasdiqlaydi.</>} />}
       </Card>
 
       <Card title={`Mahsulotlar · ${t.count}`}>
@@ -91,7 +94,7 @@ export default function Checkout() {
             </div>
           ))}
         </div>
-        <div className="mt-3 flex justify-between text-[14px]"><span className="text-muted">Tejadingiz</span><span className="font-semibold text-[#e5322f]">{som(t.saved)}</span></div>
+        {t.saved > 0 && <div className="mt-3 flex justify-between text-[14px]"><span className="text-muted">Tejadingiz</span><span className="font-semibold text-[#e5322f]">{som(t.saved)}</span></div>}
       </Card>
 
       <div className="pb-safe fixed inset-x-0 bottom-0 z-40 mx-auto max-w-[520px] border-t border-line bg-card/95 px-3 pt-3 backdrop-blur-xl">
