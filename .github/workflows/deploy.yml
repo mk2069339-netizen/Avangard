@@ -32,5 +32,5 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           PROJECT=$(jq -r .project_id "$RUNNER_TEMP/sa.json")
           echo "Firebase loyihasi: $PROJECT"
-          npx --yes firebase-tools@15 deploy --only hosting,firestore:rules --project "$PROJECT" --non-interactive
+          npx --yes firebase-tools@15 deploy --only hosting --project "$PROJECT" --non-interactive
           rm -f "$RUNNER_TEMP/sa.json"
