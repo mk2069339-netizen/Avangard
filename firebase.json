@@ -3,7 +3,7 @@
     "rules": "firestore.rules"
   },
   "hosting": {
-    "site": "muhammadkomilov",
+    "site": "avangard",
     "public": "dist",
     "ignore": [
       "firebase.json",

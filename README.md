@@ -33,9 +33,9 @@ Ilova `avangard-447ad` Firebase loyihasiga ulangan (`src/firebase.ts`). Firestor
 Baza bo'sh bo'lsa, birinchi ochilishda boshlang'ich katalog avtomatik yoziladi.
 
 1. Firebase Console → Firestore Database → **Rules** bo'limiga `firestore.rules` faylidagi matnni qo'yib, **Publish** bosing.
-2. Saytga joylash — **https://muhammadkomilov.web.app**. GitHub Actions har bir push'da saytni avtomatik yangilaydi.
+2. Saytga joylash — **https://avangard.web.app**. GitHub Actions har bir push'da saytni avtomatik yangilaydi.
    Bir martalik sozlash:
-   - Firebase Console → muhammadkomilov saytining loyihasi → ⚙️ Project settings → **Service accounts** → **Generate new private key** (JSON fayl yuklanadi).
+   - Firebase Console → avangard-447ad loyihasi → ⚙️ Project settings → **Service accounts** → **Generate new private key** (JSON fayl yuklanadi).
    - GitHub → repozitoriy → Settings → Secrets and variables → Actions → **New repository secret**:
      nomi `FIREBASE_SERVICE_ACCOUNT`, qiymati — JSON faylning butun matni.
    - Actions → «Saytga joylash» → **Run workflow**.
