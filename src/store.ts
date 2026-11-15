@@ -80,6 +80,14 @@ const systemDark = () => {
 /** Firestore `undefined` qiymatlarni qabul qilmaydi — ularni olib tashlaymiz. */
 const clean = <T,>(v: T): T => JSON.parse(JSON.stringify(v))
 
+/** Firestore ichma-ich massivlarni qo'llamaydi: specs [[k, v]] → [{k, v}] ko'rinishida saqlanadi. */
+const toDb = (p: Product) => clean({ ...p, specs: p.specs.map(([k, v]) => ({ k, v })) })
+const fromDb = (d: Record<string, unknown>, id: string): Product => {
+  const raw = (d.specs ?? []) as unknown[]
+  const specs = raw.map((x) => (Array.isArray(x) ? x : [(x as { k: string }).k, (x as { v: string }).v])) as [string, string][]
+  return { ...(d as unknown as Product), specs, id }
+}
+
 const isDenied = (e: unknown) => (e as { code?: string })?.code === 'permission-denied'
 
 export const useStore = create<State>()(
@@ -187,7 +195,7 @@ export const useStore = create<State>()(
             return true
           }
           try {
-            await setDoc(doc(db, 'products', p.id), clean(p))
+            await setDoc(doc(db, 'products', p.id), toDb(p))
             addLog(who, `${exists ? 'Tahrirlandi' : 'Qo‘shildi'}: ${p.title}`)
             get().showToast(exists ? 'Saqlandi' : 'Mahsulot qo‘shildi')
             return true
@@ -253,7 +261,7 @@ export const useStore = create<State>()(
             const snap = await getDocs(collection(db, 'products'))
             const batch = writeBatch(db)
             snap.forEach((d) => batch.delete(d.ref))
-            seedProducts.forEach((p) => batch.set(doc(db, 'products', p.id), clean(p)))
+            seedProducts.forEach((p) => batch.set(doc(db, 'products', p.id), toDb(p)))
             await batch.commit()
             addLog('boshliq', 'Katalog boshlang‘ich holatga qaytarildi')
             get().showToast('Katalog tiklandi')
@@ -309,15 +317,16 @@ export function startSync() {
         seeding = true
         try {
           const batch = writeBatch(db)
-          seedProducts.forEach((p) => batch.set(doc(db, 'products', p.id), clean(p)))
+          seedProducts.forEach((p) => batch.set(doc(db, 'products', p.id), toDb(p)))
           await batch.commit()
         } catch (e) {
           console.error(e)
+          seeding = false
         }
         return
       }
       if (snap.empty) return
-      const products = snap.docs.map((d) => ({ ...(d.data() as Product), id: d.id }))
+      const products = snap.docs.map((d) => fromDb(d.data(), d.id))
       // yangi qo‘shilganlar oldinda
       products.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
       useStore.setState({ products, sync: snap.metadata.fromCache ? 'offline' : 'online' })
