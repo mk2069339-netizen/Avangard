@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { changeOwnPassword, isDemo, staffSignIn, staffSignOut, useSession, ADMIN_EMAIL } from '../auth'
+import { changeOwnPassword, isDemo, staffSetup, staffSignIn, staffSignOut, useSession, ADMIN_EMAIL } from '../auth'
 import {
   ChevronLeft, Delete, LogOut, Package, Phone, Plus, Search, ShieldCheck, Trash2, X, Eye, EyeOff,
   Crown, ImagePlus, Cloud, CloudOff, TrendingUp, ShoppingBag, Receipt, CircleCheck, AlertTriangle, KeyRound, RotateCcw, History, Boxes,
@@ -34,18 +34,23 @@ function Gate({ role }: { role: 'admin' | 'boss' }) {
 }
 
 function PasswordGate({ role }: { role: 'admin' | 'boss' }) {
+  const [mode, setMode] = useState<'login' | 'setup'>('login')
   const [pw, setPw] = useState('')
+  const [pw2, setPw2] = useState('')
   const [show, setShow] = useState(false)
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
   const dark = role === 'boss'
+  const setup = mode === 'setup'
+  const canSubmit = setup ? pw.length >= 6 && pw === pw2 : pw.length > 0
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setBusy(true); setErr('')
-    const res = await staffSignIn(role, pw)
+    const res = setup ? await staffSetup(role, pw) : await staffSignIn(role, pw)
     setBusy(false)
-    if (res) { setErr(res); setPw('') }
+    if (res) { setErr(res); if (!setup) setPw('') }
   }
+  const field = `flex h-14 items-center gap-2 rounded-2xl px-4 ${dark ? 'bg-white/8' : 'bg-chip'} focus-within:ring-2 ${dark ? 'focus-within:ring-accent-400' : 'focus-within:ring-brand-600'}`
   return (
     <div className={`flex min-h-dvh flex-col items-center px-6 pt-6 pb-10 ${dark ? 'bg-[#0f0d16] text-white' : 'bg-card'}`}>
       <a href={SHOP_URL} className="self-start grid size-10 place-items-center rounded-full active:bg-chip" aria-label="Do‘konga o‘tish"><ChevronLeft /></a>
@@ -53,22 +58,32 @@ function PasswordGate({ role }: { role: 'admin' | 'boss' }) {
         {dark ? <Crown size={38} /> : <ShieldCheck size={38} />}
       </div>
       <h1 className="mt-5 text-2xl font-extrabold">{dark ? 'Boshliq paneli' : 'Admin paneli'}</h1>
-      <p className={`mt-1 text-sm ${dark ? 'text-white/60' : 'text-muted'}`}>Parolingizni kiriting</p>
-      <form onSubmit={submit} className={`mt-8 w-full max-w-[320px] ${err ? 'animate-[shake_.35s]' : ''}`}>
-        <label className={`flex h-14 items-center gap-2 rounded-2xl px-4 ${dark ? 'bg-white/8' : 'bg-chip'} focus-within:ring-2 ${dark ? 'focus-within:ring-accent-400' : 'focus-within:ring-brand-600'}`}>
+      <p className={`mt-1 text-center text-sm ${dark ? 'text-white/60' : 'text-muted'}`}>{setup ? 'Birinchi kirish: yangi parol o‘ylab toping (kamida 6 belgi)' : 'Parolingizni kiriting'}</p>
+      <form onSubmit={submit} className={`mt-8 w-full max-w-[320px] space-y-3 ${err ? 'animate-[shake_.35s]' : ''}`}>
+        <label className={field}>
           <KeyRound size={20} className="opacity-60" />
           <input
-            id={`pw-${role}`} type={show ? 'text' : 'password'} autoComplete="current-password" autoFocus
-            value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Parol"
+            id={`pw-${role}`} type={show ? 'text' : 'password'} autoComplete={setup ? 'new-password' : 'current-password'} autoFocus
+            value={pw} onChange={(e) => setPw(e.target.value)} placeholder={setup ? 'Yangi parol' : 'Parol'}
             className="h-full min-w-0 flex-1 bg-transparent text-[17px] outline-none placeholder:opacity-50"
           />
           <button type="button" onClick={() => setShow(!show)} aria-label={show ? 'Yashirish' : 'Ko‘rsatish'} className="opacity-60">{show ? <EyeOff size={20} /> : <Eye size={20} />}</button>
         </label>
-        <p className="mt-3 min-h-5 text-center text-sm font-medium text-[#e5322f]">{err}</p>
-        <button disabled={!pw || busy} className={`mt-3 h-13 w-full rounded-2xl py-3.5 text-[16px] font-bold transition active:scale-[.98] disabled:opacity-40 ${dark ? 'bg-accent-400 text-black' : 'bg-brand-600 text-white'}`}>
-          {busy ? 'Tekshirilmoqda…' : 'Kirish'}
+        {setup && (
+          <label className={field}>
+            <KeyRound size={20} className="opacity-60" />
+            <input id={`pw2-${role}`} type={show ? 'text' : 'password'} autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="Parolni takrorlang"
+              className="h-full min-w-0 flex-1 bg-transparent text-[17px] outline-none placeholder:opacity-50" />
+          </label>
+        )}
+        <p className="min-h-5 text-center text-sm font-medium text-[#e5322f]">{err || (setup && pw2 && pw !== pw2 ? 'Parollar bir xil emas' : '')}</p>
+        <button disabled={!canSubmit || busy} className={`w-full rounded-2xl py-3.5 text-[16px] font-bold transition active:scale-[.98] disabled:opacity-40 ${dark ? 'bg-accent-400 text-black' : 'bg-brand-600 text-white'}`}>
+          {busy ? 'Tekshirilmoqda…' : setup ? 'Parolni o‘rnatish' : 'Kirish'}
         </button>
       </form>
+      <button onClick={() => { setMode(setup ? 'login' : 'setup'); setErr(''); setPw(''); setPw2('') }} className={`mt-6 text-sm font-semibold underline-offset-4 hover:underline ${dark ? 'text-accent-400' : 'text-brand-600'}`}>
+        {setup ? 'Parolim bor — kirish' : 'Birinchi kirish? Parol o‘rnatish'}
+      </button>
     </div>
   )
 }

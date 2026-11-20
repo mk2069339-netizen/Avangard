@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import {
-  connectAuthEmulator, getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, updatePassword,
+  connectAuthEmulator, getAuth, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, updatePassword,
   EmailAuthProvider, reauthenticateWithCredential,
 } from 'firebase/auth'
 import { app } from './firebase'
@@ -41,6 +41,17 @@ export async function staffSignIn(role: 'admin' | 'boss', password: string): Pro
   }
 }
 
+/** Birinchi kirish: xodim hisobiga parol o'rnatish (hisob hali yaratilmagan bo'lsa). */
+export async function staffSetup(role: 'admin' | 'boss', password: string): Promise<string | null> {
+  if (!auth) return 'Namuna rejimida login yo‘q'
+  try {
+    await createUserWithEmailAndPassword(auth, role === 'boss' ? BOSS_EMAIL : ADMIN_EMAIL, password)
+    return null
+  } catch (e) {
+    return authError(e)
+  }
+}
+
 export async function staffSignOut() {
   if (auth) await signOut(auth).catch(() => {})
   useSession.setState({ role: null })
@@ -67,6 +78,8 @@ function authError(e: unknown): string {
   if (code === 'auth/network-request-failed') return 'Internet aloqasi yo‘q'
   if (code === 'auth/operation-not-allowed' || code === 'auth/configuration-not-found')
     return 'Firebase’da Email/Password kirish usuli yoqilmagan'
+  if (code === 'auth/email-already-in-use') return 'Bu panelga parol allaqachon o‘rnatilgan. «Kirish» orqali kiring'
+  if (code === 'auth/admin-restricted-operation') return 'Yangi parol o‘rnatish yopilgan. Parolni Firebase Console’da tiklang'
   if (code === 'auth/weak-password') return 'Yangi parol kamida 6 belgidan iborat bo‘lsin'
   if (code === 'auth/user-disabled') return 'Bu hisob o‘chirib qo‘yilgan'
   console.error(e)
