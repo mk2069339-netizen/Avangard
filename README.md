@@ -23,7 +23,8 @@ Mahsulotlar ro‘yxati: `src/data/products.ts`. Logotip: `src/assets/logo.png`.
 
 ## Admin va Boshliq panellari
 - **Admin paneli**: bosh sahifadagi logotipni 5 marta ketma-ket bosing → Admin paroli.
-- **Boshliq paneli**: Admin panelidagi qalqon belgisini 5 marta bosing → Boshliq paroli.
+- **Boshliq paneli**: Kabinet sahifasidagi Avangard logotipini 5 marta bosing → Boshliq paroli.
+- Panellar alohida: Admin panelidan Boshliq paneliga yo'l yo'q va aksincha; har biri o'z paroli bilan.
 - Kirish Firebase Authentication (Email/Password) orqali: `admin@avangard.app` va `boshliq@avangard.app`.
   Bazaga mahsulot qo'shish/o'zgartirish va buyurtmalarni ko'rish faqat shu hisoblarga ruxsat etilgan (`firestore.rules`).
 - Ikkala panelda ham mahsulot qo'shish, tahrirlash, rasm yuklash, yashirish va o'chirish bor.

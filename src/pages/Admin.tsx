@@ -140,12 +140,11 @@ function PinGate({ role, onOk }: { role: 'admin' | 'boss'; onOk: () => void }) {
 export function AdminPanel() {
   const nav = useNavigate()
   const role = useSession((s) => s.role)
-  const boss = role === 'boss'
   const [tab, setTab] = useState<'orders' | 'products'>('orders')
-  const tapIcon = useTapUnlock(5, () => nav('/boss'))
   const orders = useStore((s) => s.orders)
   const fresh = orders.filter((o) => o.status === 'Yangi').length
-  const unlocked = role === 'admin' || boss
+  // Admin paneli faqat Admin hisobi uchun (Boshliq o'z panelidan ishlaydi)
+  const unlocked = role === 'admin'
   useEffect(() => (unlocked ? subscribeStaff() : undefined), [unlocked])
 
   if (!unlocked) return <Gate role="admin" />
@@ -155,10 +154,9 @@ export function AdminPanel() {
       <header className="sticky top-0 z-30 border-b border-line bg-card/95 backdrop-blur-xl">
         <div className="flex h-14 items-center gap-2 px-2">
           <button onClick={() => nav('/')} className="grid size-10 place-items-center rounded-full active:bg-chip" aria-label="Do‘konga qaytish"><ChevronLeft /></button>
-          {/* Admin belgisi: 5 marta bosilsa Boshliq paneli ochiladi */}
-          <button onClick={tapIcon} className="grid size-9 place-items-center rounded-xl bg-brand-600 text-white select-none" aria-label="Admin">
+          <span className="grid size-9 place-items-center rounded-xl bg-brand-600 text-white" aria-hidden="true">
             <ShieldCheck size={20} />
-          </button>
+          </span>
           <div className="flex-1 leading-tight">
             <div className="text-[16px] font-bold">Admin paneli</div>
             <SyncBadge />
@@ -175,7 +173,7 @@ export function AdminPanel() {
           ))}
         </div>
       </header>
-      {tab === 'orders' ? <OrdersAdmin /> : <ProductsAdmin who={boss ? 'boshliq' : 'admin'} />}
+      {tab === 'orders' ? <OrdersAdmin /> : <ProductsAdmin who="admin" />}
     </div>
   )
 }
@@ -447,7 +445,7 @@ export function BossPanel() {
     <div className="min-h-dvh pb-10">
       <header className="bg-gradient-to-br from-[#0f0d16] via-brand-900 to-brand-700 px-3 pt-2 pb-4 text-white">
         <div className="flex h-12 items-center gap-2">
-          <button onClick={() => nav('/admin')} className="grid size-10 place-items-center rounded-full active:bg-white/10" aria-label="Orqaga"><ChevronLeft /></button>
+          <button onClick={() => nav('/')} className="grid size-10 place-items-center rounded-full active:bg-white/10" aria-label="Do‘konga qaytish"><ChevronLeft /></button>
           <span className="grid size-9 place-items-center rounded-xl bg-accent-400 text-black"><Crown size={20} /></span>
           <div className="flex-1 leading-tight">
             <div className="text-[16px] font-bold">Boshliq paneli</div>
@@ -603,7 +601,7 @@ function BossSettings() {
         ) : (
           <button onClick={() => setConfirmReset(true)} className="h-12 w-full rounded-2xl bg-[#e5322f]/10 font-semibold text-[#e5322f]">Katalogni tiklash</button>
         )}
-        <Link to="/admin" className="mt-2 grid h-12 place-items-center rounded-2xl bg-chip font-semibold">Mahsulotlarni tahrirlash</Link>
+        
       </Card>
 
       <Card title={<span className="flex w-full items-center justify-between"><span className="flex items-center gap-2"><History size={18} /> Xodimlar harakatlari</span>{log.length > 0 && <button onClick={clearLog} className="text-[12px] font-medium text-muted">Tozalash</button>}</span>}>

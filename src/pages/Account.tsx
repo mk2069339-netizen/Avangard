@@ -6,6 +6,7 @@ import { ProductImage } from '../components/ProductArt'
 import { tintFor } from '../components/ProductCard'
 import { Empty, Mark, PrimaryButton, TopBar } from '../components/ui'
 import { orderNo, useStore } from '../store'
+import { useTapUnlock } from './Admin'
 import { deliveryDate, som } from '../format'
 
 export function Favorites() {
@@ -26,6 +27,8 @@ export function Favorites() {
 }
 
 export function Profile() {
+  const navP = useNavigate()
+  const tapBoss = useTapUnlock(5, () => navP('/boss'))
   const { dark, toggleDark, myOrders: orders, city, favs } = useStore()
   const rows = [
     { i: Package, t: 'Buyurtmalarim', s: orders.length ? `${orders.length} ta` : '', to: '/orders' },
@@ -40,7 +43,8 @@ export function Profile() {
     <div className="pb-28">
       <div className="bg-gradient-to-br from-brand-900 via-brand-700 to-brand-500 px-4 pt-6 pb-16 text-white">
         <div className="flex items-center gap-3">
-          <div className="grid size-16 place-items-center rounded-full bg-white p-2"><Mark className="h-9" /></div>
+          {/* Logotipni 5 marta bosish — Boshliq paneli */}
+          <button onClick={tapBoss} className="grid size-16 place-items-center rounded-full bg-white p-2 select-none" aria-label="Avangard"><Mark className="h-9" /></button>
           <div>
             <div className="text-xl font-extrabold">Mehmon</div>
             <div className="text-sm opacity-80">Kirish yoki ro‘yxatdan o‘tish</div>
