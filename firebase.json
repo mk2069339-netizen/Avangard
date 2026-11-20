@@ -15,6 +15,18 @@
         "source": "**",
         "destination": "/index.html"
       }
+    ],
+    "cleanUrls": true,
+    "headers": [
+      {
+        "source": "/@(admin|boshliq)",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
+      }
     ]
   },
   "emulators": {

@@ -6,7 +6,6 @@ import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import { Catalog, CategoryPage, SearchPage } from './pages/Listing'
 import { Favorites, Orders, Profile, Success } from './pages/Account'
-import { AdminPanel, BossPanel } from './pages/Admin'
 import BottomNav from './components/BottomNav'
 import { startSync, useStore } from './store'
 
@@ -20,7 +19,7 @@ function Shell() {
   }, [dark])
   useEffect(() => { startSync() }, [])
   useEffect(() => { if (!pathname.startsWith('/p/')) window.scrollTo(0, 0) }, [pathname])
-  const hideNav = /^\/(p\/|checkout|success|search|admin|boss)/.test(pathname)
+  const hideNav = /^\/(p\/|checkout|success|search)/.test(pathname)
 
   return (
     <div className="bg-app relative mx-auto min-h-dvh max-w-[520px] shadow-[0_0_60px_rgba(0,0,0,.06)]">
@@ -36,8 +35,6 @@ function Shell() {
         <Route path="/favorites" element={<Favorites />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/orders" element={<Orders />} />
-        <Route path="/admin" element={<AdminPanel />} />
-        <Route path="/boss" element={<BossPanel />} />
         <Route path="*" element={<Home />} />
       </Routes>
       {!hideNav && <BottomNav />}

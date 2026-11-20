@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
 import { changeOwnPassword, isDemo, staffSignIn, staffSignOut, useSession, ADMIN_EMAIL } from '../auth'
 import {
   ChevronLeft, Delete, LogOut, Package, Phone, Plus, Search, ShieldCheck, Trash2, X, Eye, EyeOff,
@@ -13,21 +12,8 @@ import { Mark, PrimaryButton } from '../components/ui'
 import { som } from '../format'
 
 
-/** 5 marta ketma-ket bosishni sanaydi (har bosish orasida 1.5 soniyadan kam). */
-export function useTapUnlock(times: number, onUnlock: () => void) {
-  const n = useRef(0)
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
-  return () => {
-    n.current += 1
-    clearTimeout(timer.current)
-    if (n.current >= times) {
-      n.current = 0
-      onUnlock()
-      return
-    }
-    timer.current = setTimeout(() => (n.current = 0), 1500)
-  }
-}
+/** Xaridorlar do'koni manzili (panellar alohida sahifada). */
+const SHOP_URL = './'
 
 const statusColor: Record<OrderStatus, string> = {
   Yangi: 'bg-brand-600 text-white',
@@ -48,7 +34,6 @@ function Gate({ role }: { role: 'admin' | 'boss' }) {
 }
 
 function PasswordGate({ role }: { role: 'admin' | 'boss' }) {
-  const nav = useNavigate()
   const [pw, setPw] = useState('')
   const [show, setShow] = useState(false)
   const [err, setErr] = useState('')
@@ -63,7 +48,7 @@ function PasswordGate({ role }: { role: 'admin' | 'boss' }) {
   }
   return (
     <div className={`flex min-h-dvh flex-col items-center px-6 pt-6 pb-10 ${dark ? 'bg-[#0f0d16] text-white' : 'bg-card'}`}>
-      <button onClick={() => nav('/')} className="self-start grid size-10 place-items-center rounded-full active:bg-chip" aria-label="Orqaga"><ChevronLeft /></button>
+      <a href={SHOP_URL} className="self-start grid size-10 place-items-center rounded-full active:bg-chip" aria-label="Do‘konga o‘tish"><ChevronLeft /></a>
       <div className={`mt-6 grid size-20 place-items-center rounded-3xl ${dark ? 'bg-accent-400 text-black' : 'bg-brand-600 text-white'}`}>
         {dark ? <Crown size={38} /> : <ShieldCheck size={38} />}
       </div>
@@ -89,7 +74,6 @@ function PasswordGate({ role }: { role: 'admin' | 'boss' }) {
 }
 
 function PinGate({ role, onOk }: { role: 'admin' | 'boss'; onOk: () => void }) {
-  const nav = useNavigate()
   const pass = useStore((s) => (role === 'admin' ? s.adminPass : s.bossPass))
   const [pin, setPin] = useState('')
   const [err, setErr] = useState(false)
@@ -106,7 +90,7 @@ function PinGate({ role, onOk }: { role: 'admin' | 'boss'; onOk: () => void }) {
   const dark = role === 'boss'
   return (
     <div className={`flex min-h-dvh flex-col items-center px-6 pt-6 pb-10 ${dark ? 'bg-[#0f0d16] text-white' : 'bg-card'}`}>
-      <button onClick={() => nav('/')} className="self-start grid size-10 place-items-center rounded-full active:bg-chip" aria-label="Orqaga"><ChevronLeft /></button>
+      <a href={SHOP_URL} className="self-start grid size-10 place-items-center rounded-full active:bg-chip" aria-label="Do‘konga o‘tish"><ChevronLeft /></a>
       <div className={`mt-6 grid size-20 place-items-center rounded-3xl ${dark ? 'bg-accent-400 text-black' : 'bg-brand-600 text-white'}`}>
         {dark ? <Crown size={38} /> : <ShieldCheck size={38} />}
       </div>
@@ -138,7 +122,6 @@ function PinGate({ role, onOk }: { role: 'admin' | 'boss'; onOk: () => void }) {
 
 /* ======================= ADMIN PANELI ======================= */
 export function AdminPanel() {
-  const nav = useNavigate()
   const role = useSession((s) => s.role)
   const [tab, setTab] = useState<'orders' | 'products'>('orders')
   const orders = useStore((s) => s.orders)
@@ -153,7 +136,7 @@ export function AdminPanel() {
     <div className="min-h-dvh pb-10">
       <header className="sticky top-0 z-30 border-b border-line bg-card/95 backdrop-blur-xl">
         <div className="flex h-14 items-center gap-2 px-2">
-          <button onClick={() => nav('/')} className="grid size-10 place-items-center rounded-full active:bg-chip" aria-label="Do‘konga qaytish"><ChevronLeft /></button>
+          <a href={SHOP_URL} className="grid size-10 place-items-center rounded-full active:bg-chip" aria-label="Do‘konga o‘tish"><ChevronLeft /></a>
           <span className="grid size-9 place-items-center rounded-xl bg-brand-600 text-white" aria-hidden="true">
             <ShieldCheck size={20} />
           </span>
@@ -161,7 +144,7 @@ export function AdminPanel() {
             <div className="text-[16px] font-bold">Admin paneli</div>
             <SyncBadge />
           </div>
-          <button onClick={async () => { await staffSignOut(); nav('/') }} className="flex items-center gap-1 rounded-full bg-chip px-3 py-1.5 text-[13px] font-semibold" aria-label="Chiqish">
+          <button onClick={() => staffSignOut()} className="flex items-center gap-1 rounded-full bg-chip px-3 py-1.5 text-[13px] font-semibold" aria-label="Chiqish">
             <LogOut size={15} /> Chiqish
           </button>
         </div>
@@ -435,7 +418,6 @@ function F({ label, children }: { label: string; children: React.ReactNode }) {
 
 /* ======================= BOSHLIQ PANELI ======================= */
 export function BossPanel() {
-  const nav = useNavigate()
   const boss = useSession((s) => s.role) === 'boss'
   const [tab, setTab] = useState<'stats' | 'orders' | 'products' | 'settings'>('stats')
   useEffect(() => (boss ? subscribeStaff() : undefined), [boss])
@@ -445,13 +427,13 @@ export function BossPanel() {
     <div className="min-h-dvh pb-10">
       <header className="bg-gradient-to-br from-[#0f0d16] via-brand-900 to-brand-700 px-3 pt-2 pb-4 text-white">
         <div className="flex h-12 items-center gap-2">
-          <button onClick={() => nav('/')} className="grid size-10 place-items-center rounded-full active:bg-white/10" aria-label="Do‘konga qaytish"><ChevronLeft /></button>
+          <a href={SHOP_URL} className="grid size-10 place-items-center rounded-full active:bg-white/10" aria-label="Do‘konga o‘tish"><ChevronLeft /></a>
           <span className="grid size-9 place-items-center rounded-xl bg-accent-400 text-black"><Crown size={20} /></span>
           <div className="flex-1 leading-tight">
             <div className="text-[16px] font-bold">Boshliq paneli</div>
             <SyncBadge light />
           </div>
-          <button onClick={async () => { await staffSignOut(); nav('/') }} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-[13px] font-semibold"><LogOut size={15} /> Chiqish</button>
+          <button onClick={() => staffSignOut()} className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-[13px] font-semibold"><LogOut size={15} /> Chiqish</button>
         </div>
         <div className="mt-3 grid grid-cols-4 gap-1 rounded-2xl bg-white/10 p-1">
           {([['stats', 'Hisobot'], ['orders', 'Buyurtma'], ['products', 'Mahsulot'], ['settings', 'Sozlama']] as const).map(([k, l]) => (

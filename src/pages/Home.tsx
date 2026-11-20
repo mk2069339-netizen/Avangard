@@ -6,7 +6,6 @@ import ProductCard, { ProductGrid } from '../components/ProductCard'
 import ProductArt from '../components/ProductArt'
 import { Countdown, Logo, Section } from '../components/ui'
 import { useStore } from '../store'
-import { useTapUnlock } from './Admin'
 import { som } from '../format'
 
 const banners = [
@@ -29,7 +28,6 @@ export default function Home() {
   const nav = useNavigate()
   const products = useStore((s) => s.products).filter((p) => !p.hidden)
   const brands = brandsOf(products)
-  const tapLogo = useTapUnlock(5, () => nav('/admin'))
   const city = useStore((s) => s.city)
   const setCity = useStore((s) => s.setCity)
   const [chip, setChip] = useState('Hammasi')
@@ -50,7 +48,7 @@ export default function Home() {
       {/* Header */}
       <div className="bg-card px-4 pt-3 pb-1">
         <div className="flex items-center justify-between">
-          <button onClick={tapLogo} className="select-none" aria-label="Avangard"><Logo className="h-8" /></button>
+          <Logo className="h-8" />
           <div className="flex items-center gap-1">
             <button
               onClick={() => { const list = ['Toshkent', 'Samarqand', 'Buxoro', 'Namangan', 'Andijon', 'Farg‘ona', 'Qarshi', 'Nukus']; setCity(list[(list.indexOf(city) + 1) % list.length]) }}

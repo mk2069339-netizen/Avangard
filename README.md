@@ -22,13 +22,12 @@ npm run build:single # dist-single/index.html — bitta fayl
 Mahsulotlar ro‘yxati: `src/data/products.ts`. Logotip: `src/assets/logo.png`.
 
 ## Admin va Boshliq panellari
-- **Admin paneli**: bosh sahifadagi logotipni 5 marta ketma-ket bosing → Admin paroli.
-- **Boshliq paneli**: Kabinet sahifasidagi Avangard logotipini 5 marta bosing → Boshliq paroli.
-- Panellar alohida: Admin panelidan Boshliq paneliga yo'l yo'q va aksincha; har biri o'z paroli bilan.
-- Kirish Firebase Authentication (Email/Password) orqali: `admin@avangard.app` va `boshliq@avangard.app`.
-  Bazaga mahsulot qo'shish/o'zgartirish va buyurtmalarni ko'rish faqat shu hisoblarga ruxsat etilgan (`firestore.rules`).
-- Ikkala panelda ham mahsulot qo'shish, tahrirlash, rasm yuklash, yashirish va o'chirish bor.
-  Boshliq panelida qo'shimcha: hisobot, o'z parolini o'zgartirish, katalogni tiklash, xodimlar jurnali.
+Panellar xaridorlar ilovasining ichida emas — alohida sahifalar (do'kon kodida ularga kirish yo'li yo'q):
+- **Admin paneli**: https://avangard.web.app/admin — Admin paroli (`admin@avangard.app`)
+- **Boshliq paneli**: https://avangard.web.app/boshliq — Boshliq paroli (`boshliq@avangard.app`)
+
+Ikkala panelda: buyurtmalar, mahsulot qo'shish/tahrirlash, rasm yuklash. Boshliq panelida qo'shimcha: hisobot,
+o'z parolini o'zgartirish, katalogni tiklash, xodimlar jurnali. Sahifalar qidiruv tizimlariga ko'rsatilmaydi (noindex).
 
 ### Bir martalik sozlash (Firebase Console, `avangard-447ad`)
 1. Authentication → Get started → Sign-in method → **Email/Password** ni yoqing.
