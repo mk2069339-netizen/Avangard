@@ -2,6 +2,9 @@ name: Firebase bir martalik sozlash (login + qoidalar)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [claude/m3nga-avangard-ilovasi-efcl2c]
+    paths: ['scripts/firebase-setup.mjs', 'firestore.rules', '.github/workflows/firebase-setup.yml']
 
 jobs:
   setup:
